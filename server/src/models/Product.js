@@ -16,7 +16,13 @@ const variantSchema = new mongoose.Schema(
     price: { type: Number, required: true, min: 0 },
     mrp: { type: Number, min: 0 },
     stock: { type: Number, required: true, min: 0, default: 0 },
-    images: [variantImageSchema],
+    images: {
+      type: [variantImageSchema],
+      validate: {
+        validator: (images) => Array.isArray(images) && images.length > 0 && images.length <= 5,
+        message: "Each variant must have between 1 and 5 images",
+      },
+    },
     isActive: { type: Boolean, default: true },
     taxCode: { type: String, default: "" }, // override product-level tax if needed
   },

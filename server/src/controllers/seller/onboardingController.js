@@ -17,6 +17,12 @@ const parseBusinessAddress = (businessAddress = {}) => ({
   country: businessAddress.country || "India",
 });
 
+const parseBankDetails = (bankDetails = {}) => ({
+  accountNumber: bankDetails.accountNumber || "",
+  ifsc: bankDetails.ifsc || "",
+  bankName: bankDetails.bankName || "",
+});
+
 export const getMyOnboardingStatus = async (req, res) => {
   try {
     const profile = await SellerProfile.findOne({
@@ -30,7 +36,7 @@ export const getMyOnboardingStatus = async (req, res) => {
         message: "Seller onboarding not started",
         data: {
           onboardingStatus: "draft",
-          requiredDocumentTypes: ["gstin", "pan", "bank"],
+          requiredDocumentTypes: ["gstin", "pan", "aadhaar", "passbook_or_bank_statement"],
         },
       });
     }
@@ -56,9 +62,12 @@ export const saveOnboardingDraft = async (req, res) => {
       slug,
       description,
       logo,
+      ownerPhotoUrl,
       gstin,
       pan,
+      aadhaar,
       businessAddress,
+      bankDetails,
       bankAccountDetails,
       documents = [],
       commissionRate,
@@ -107,8 +116,11 @@ export const saveOnboardingDraft = async (req, res) => {
 
     if (description != null) profile.description = description;
     if (logo != null) profile.logo = logo;
+    if (ownerPhotoUrl != null) profile.ownerPhotoUrl = ownerPhotoUrl;
     if (gstin != null) profile.gstin = gstin;
     if (pan != null) profile.pan = pan;
+    if (aadhaar != null) profile.aadhaar = aadhaar;
+    if (bankDetails != null) profile.bankDetails = parseBankDetails(bankDetails);
     if (bankAccountDetails != null) profile.bankAccountDetails = bankAccountDetails;
     if (businessAddress) profile.businessAddress = parseBusinessAddress(businessAddress);
     if (documents.length) profile.documents = toSellerDocuments(documents);
@@ -143,9 +155,12 @@ export const submitSellerOnboarding = async (req, res) => {
       slug,
       description,
       logo,
+      ownerPhotoUrl,
       gstin,
       pan,
+      aadhaar,
       businessAddress,
+      bankDetails,
       bankAccountDetails,
       documents = [],
       commissionRate,
@@ -153,10 +168,17 @@ export const submitSellerOnboarding = async (req, res) => {
       defaultDeliveryProvider,
     } = req.body;
 
-    if (!shopName || !gstin || !pan || !bankAccountDetails) {
+    const normalizedBankDetails = parseBankDetails(bankDetails || {});
+    const hasBankDetails =
+      !!normalizedBankDetails.accountNumber &&
+      !!normalizedBankDetails.ifsc &&
+      !!normalizedBankDetails.bankName;
+
+    if (!shopName || !gstin || !pan || !aadhaar || !ownerPhotoUrl || !hasBankDetails) {
       return res.status(200).json({
         success: false,
-        message: "shopName, gstin, pan and bankAccountDetails are required",
+        message:
+          "shopName, gstin, pan, aadhaar, ownerPhoto and bankDetails(accountNumber, ifsc, bankName) are required",
         data: null,
       });
     }
@@ -207,9 +229,12 @@ export const submitSellerOnboarding = async (req, res) => {
     profile.slug = resolvedSlug;
     profile.description = description || "";
     profile.logo = logo || "";
+    profile.ownerPhotoUrl = ownerPhotoUrl || "";
     profile.gstin = gstin;
     profile.pan = pan;
+    profile.aadhaar = aadhaar;
     profile.businessAddress = parseBusinessAddress(businessAddress);
+    profile.bankDetails = normalizedBankDetails;
     profile.bankAccountDetails = bankAccountDetails;
     profile.documents = toSellerDocuments(documents);
     profile.commissionRate = Number(commissionRate) || 0;

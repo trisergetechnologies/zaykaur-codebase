@@ -15,11 +15,29 @@ const businessAddressSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const bankDetailsSchema = new mongoose.Schema(
+  {
+    accountNumber: { type: String, default: "" },
+    ifsc: { type: String, default: "" },
+    bankName: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
 const sellerDocumentSchema = new mongoose.Schema(
   {
     documentType: {
       type: String,
-      enum: ["gstin", "pan", "bank", "address", "other"],
+      enum: [
+        "gstin",
+        "pan",
+        "aadhaar",
+        "passbook",
+        "bank_statement",
+        "owner_photo",
+        "address",
+        "other",
+      ],
       required: true,
     },
     documentNumber: { type: String, default: "" },
@@ -65,9 +83,12 @@ const sellerProfileSchema = new mongoose.Schema(
     },
     description: { type: String, default: "" },
     logo: { type: String, default: "" },
+    ownerPhotoUrl: { type: String, default: "" },
     gstin: { type: String, default: "" },
     pan: { type: String, default: "" },
+    aadhaar: { type: String, default: "" },
     businessAddress: businessAddressSchema,
+    bankDetails: bankDetailsSchema,
     bankAccountDetails: { type: String, default: "" }, // encrypted or ref; display last4 only
     documents: { type: [sellerDocumentSchema], default: [] },
     onboardingStatus: {

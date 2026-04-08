@@ -4,6 +4,7 @@ import TaxRule from "../../models/TaxRule.js";
 import {
   slugify,
   validateCategoryRequiredVariantAttributes,
+  validateVariantImageLimits,
 } from "../../lib/sellerProductValidation.js";
 
 const agentLog = (payload) => {
@@ -93,6 +94,11 @@ const validateProductPayload = async ({
   const variantValidation = validateCategoryRequiredVariantAttributes(category, data.variants);
   if (!variantValidation.ok) {
     return variantValidation;
+  }
+
+  const variantImageValidation = validateVariantImageLimits(data.variants);
+  if (!variantImageValidation.ok) {
+    return variantImageValidation;
   }
 
   const duplicateSlug = await Product.findOne({

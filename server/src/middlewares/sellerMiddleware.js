@@ -27,9 +27,7 @@ export const ensureActiveSeller = async (req, res, next) => {
       });
     }
 
-    const onboardingApproved =
-      profile.onboardingStatus === "approved" ||
-      (profile.onboardingStatus === "draft" && profile.isVerified);
+    const onboardingApproved = profile.onboardingStatus === "approved";
 
     if (!profile.isVerified || !profile.isActive || !onboardingApproved) {
       return res.status(403).json({
@@ -86,9 +84,7 @@ export const ensureSellerCanViewOrders = async (req, res, next) => {
       });
     }
 
-    const onboardingApproved =
-      profile.onboardingStatus === "approved" ||
-      (profile.onboardingStatus === "draft" && profile.isVerified);
+    const onboardingApproved = profile.onboardingStatus === "approved";
 
     if (!profile.isVerified || !onboardingApproved) {
       return res.status(403).json({

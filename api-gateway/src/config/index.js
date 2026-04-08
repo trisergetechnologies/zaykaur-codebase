@@ -19,8 +19,10 @@ const config = {
   /** Optional. Recommendation service; if not set, /api/v1/recommendations returns 501. */
   pythonServiceUrl: process.env.PYTHON_SERVICE_URL || null,
 
-  /** CORS: allowed origin for web frontend (comma-separated for multiple). */
-  corsOrigin: process.env.CORS_ORIGIN || "http://localhost:3000",
+  /** CORS: allowed origins (comma-separated). Default includes storefront + dashboard dev ports. */
+  corsOrigin:
+    process.env.CORS_ORIGIN ||
+    "http://localhost:3000,http://localhost:3001",
 
   /** JWT secret for optional token validation at gateway (e.g. cache user by token). */
   jwtSecret: process.env.JWT_SECRET || null,
@@ -28,6 +30,11 @@ const config = {
   /** Rate limit: max requests per window per IP */
   rateLimitWindowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 60_000,
   rateLimitMax: Number(process.env.RATE_LIMIT_MAX) || 100,
+
+  /** Pino log level: trace, debug, info, warn, error, fatal */
+  logLevel:
+    process.env.LOG_LEVEL ||
+    (process.env.NODE_ENV === "development" ? "debug" : "info"),
 };
 
 export default config;

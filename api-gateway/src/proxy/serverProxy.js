@@ -31,6 +31,9 @@ export async function proxyToServer(req, res) {
   const headers = { ...req.headers };
   delete headers.host;
   delete headers["content-length"];
+  if (req.requestId) {
+    headers["X-Request-Id"] = req.requestId;
+  }
 
   try {
     const response = await serverClient.request({
@@ -67,13 +70,18 @@ export async function proxyToPython(req, res) {
   const path = req.url?.replace(/^\/api\/v1\/recommendations/, "") || "/";
   const method = (req.method || "GET").toLowerCase();
 
+  const pyHeaders = { ...req.headers, host: undefined };
+  if (req.requestId) {
+    pyHeaders["X-Request-Id"] = req.requestId;
+  }
+
   try {
     const response = await pythonClient.request({
       method,
       url: path || "/",
       params: req.query,
       data: req.body,
-      headers: { ...req.headers, host: undefined },
+      headers: pyHeaders,
       responseType: "json",
     });
     res.status(response.status).json(response.data ?? {});

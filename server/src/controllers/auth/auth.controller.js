@@ -136,6 +136,94 @@ export const registerCustomer = async (req, res) => {
   }
 };
 
+/**
+ * Dedicated seller registration endpoint.
+ * Keeps seller onboarding account creation separated from customer website registration.
+ */
+export const registerSeller = async (req, res) => {
+  try {
+    const { name, email, phone, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(200).json({
+        success: false,
+        message: "Required fields missing",
+        data: null,
+      });
+    }
+
+    const normalizedEmail = String(email).toLowerCase().trim();
+    const phoneTrimmed =
+      phone != null && String(phone).trim() ? String(phone).trim() : null;
+
+    const orConditions = [{ email: normalizedEmail }];
+    if (phoneTrimmed) {
+      orConditions.push({ phone: phoneTrimmed });
+    }
+
+    const existingUser = await User.findOne({
+      $or: orConditions,
+      isDeleted: { $ne: true },
+    }).select("+password");
+
+    if (existingUser) {
+      return res.status(200).json({
+        success: false,
+        message:
+          "An account with this email or phone already exists. Please sign in instead.",
+        data: null,
+      });
+    }
+
+    const user = await User.create({
+      name,
+      email: normalizedEmail,
+      phone: phoneTrimmed || undefined,
+      password,
+      role: "seller",
+    });
+
+    const token = generateToken({
+      id: user._id,
+      role: user.role,
+    });
+
+    sendWelcomeEmail(user).catch(() => {});
+
+    const emailToken = user.createEmailVerificationToken();
+    await user.save({ validateBeforeSave: false });
+    sendEmailVerification(user, emailToken).catch(() => {});
+
+    return res.status(200).json({
+      success: true,
+      message: "Seller account created successfully",
+      data: {
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      },
+    });
+  } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(200).json({
+        success: false,
+        message:
+          "An account with this email or phone already exists. Please sign in.",
+        data: null,
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      data: null,
+    });
+  }
+};
+
 
 /**
  * @route   POST /api/auth/login

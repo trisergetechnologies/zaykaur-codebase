@@ -32,14 +32,15 @@ export const validateCategoryRequiredVariantAttributes = (category, variants = [
 };
 
 export const validateOnboardingDocuments = (documents = []) => {
-  if (!Array.isArray(documents) || documents.length < 3) {
+  if (!Array.isArray(documents) || documents.length < 4) {
     return {
       ok: false,
-      message: "At least 3 documents are required (gstin, pan, bank)",
+      message:
+        "Required documents are missing (gstin, pan, aadhaar and passbook/bank_statement)",
     };
   }
 
-  const required = new Set(["gstin", "pan", "bank"]);
+  const required = new Set(["gstin", "pan", "aadhaar"]);
   const available = new Set(
     documents
       .map((document) => String(document?.documentType || "").toLowerCase().trim())
@@ -55,10 +56,30 @@ export const validateOnboardingDocuments = (documents = []) => {
     }
   }
 
+  if (!available.has("passbook") && !available.has("bank_statement")) {
+    return {
+      ok: false,
+      message: "Either 'passbook' or 'bank_statement' document is required",
+    };
+  }
+
   const hasMissingUrl = documents.some((document) => !document?.documentUrl);
   if (hasMissingUrl) {
     return { ok: false, message: "Each document must include documentUrl" };
   }
 
+  return { ok: true, message: "" };
+};
+
+export const validateVariantImageLimits = (variants = []) => {
+  for (const variant of variants) {
+    const count = Array.isArray(variant?.images) ? variant.images.length : 0;
+    if (count === 0) {
+      return { ok: false, message: "Each variant must include at least one image" };
+    }
+    if (count > 5) {
+      return { ok: false, message: "Each variant can have up to 5 images" };
+    }
+  }
   return { ok: true, message: "" };
 };
