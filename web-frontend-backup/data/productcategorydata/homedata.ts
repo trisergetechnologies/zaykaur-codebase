@@ -1,0 +1,78 @@
+export const homedata = [
+  {
+    id: 1,
+    category: "electronics",
+    name: "Watches",
+    slug: "watches",
+    image: "https://rukminim2.flixcart.com/image/272/360/xif0q/smartwatch/e/e/j/-original-imah759hywsyd834.jpeg?q=60&crop=false",
+    description: "Premium analog and smart watches for men and women.",
+    featured: true,
+    itemCount: 120,
+    price: 4999,
+    discount: 20, // %
+    finalPrice: 3999,
+    rating: 4.5,
+    stock: 25,
+    
+  },
+  {
+    id: 2,
+    category: "clothes",
+    name: "Clothing",
+    slug: "clothing",
+    image: "https://rukminim2.flixcart.com/image/1536/1536/xif0q/ethnic-set/n/z/h/m-36770oh-libas-original-imahb94vdqxy6fy7.jpeg?q=90",
+    description: "Trendy fashion wear for all seasons.",
+    featured: true,
+    itemCount: 320,
+    price: 2499,
+    discount: 15,
+    finalPrice: 2124,
+    rating: 4.3,
+    stock: 40
+  },
+  {
+    id: 3,
+    category: "footwear",
+    name: "Footwear",
+    slug: "footwear",
+    image: "https://rukminim2.flixcart.com/image/612/612/xif0q/shoe/k/b/q/10-kj6771-10-adidas-orbgry-grey-puor-original-imahkfjkfdkvae4x.jpeg?q=70",
+    description: "Comfortable and stylish shoes & sandals.",
+    featured: true,
+    itemCount: 210,
+    price: 2999,
+    discount: 25,
+    finalPrice: 2249,
+    rating: 4.6,
+    stock: 30
+  },
+  {
+    id: 4,
+    category: "bags",
+    name: "Bags",
+    slug: "bags",
+    image: "https://rukminim2.flixcart.com/image/612/612/xif0q/backpack/f/m/h/12-large-45-l-laptop-backpack-backpacks-for-men-backpacks-original-imahj5qjgfdrnzkg.jpeg?q=70 ",
+    description: "Handbags, backpacks & travel bags.",
+    featured: false,
+    itemCount: 150,
+    price: 1999,
+    discount: 10,
+    finalPrice: 1799,
+    rating: 4.2,
+    stock: 50
+  },
+  {
+    id: 5,
+    category: "jewelry",
+    name: "Jewelry",
+    slug: "jewelry",
+    image: "https://rukminim2.flixcart.com/image/612/612/xif0q/backpack/f/m/h/12-large-45-l-laptop-backpack-backpacks-for-men-backpacks-original-imahj5qjgfdrnzkg.jpeg?q=70",
+    description: "Elegant necklaces, rings & bracelets.",
+    featured: true,
+    itemCount: 95,
+    price: 5999,
+    discount: 30,
+    finalPrice: 4199,
+    rating: 4.7,
+    stock: 15
+  }
+];
