@@ -1,31 +1,31 @@
 "use client";
 
-import React, { Suspense, useState, useEffect } from "react";
-import { createPortal } from "react-dom";
-import Link from "next/link";
-import {
-  Menu,
-  X,
-  ShoppingBag,
-  Heart,
-  User,
-  Home,
-  Store,
-  Search,
-  LayoutGrid,
-  Package,
-} from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import {
+  Heart,
+  Home,
+  LayoutGrid,
+  Menu,
+  Package,
+  Search,
+  ShoppingBag,
+  Store,
+  User,
+  X,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
-import SearchBox from "./SearchBox";
 import MegaMenuNav from "./MegaMenuNav";
+import SearchBox from "./SearchBox";
 
+import { topCategories } from "@/data/category/topCategories";
+import useAuthStore from "@/store/authStore";
 import useCartStore from "@/store/cartStore";
 import useWishlistStore from "@/store/wishlistStore";
-import useAuthStore from "@/store/authStore";
-import { topCategories } from "@/data/category/topCategories";
 
 const HeaderOne = () => {
 
@@ -40,7 +40,7 @@ const HeaderOne = () => {
 
   const cartCount = cartItems?.length || 0;
   const wishlistCount = isAuthenticated ? wishlistItems?.length || 0 : 0;
-  const sellerPortalUrl = `${(process.env.NEXT_PUBLIC_SELLER_PORTAL_URL || "http://localhost:3001").replace(/\/+$/, "")}/signin`;
+  const sellerPortalUrl = `${(process.env.NEXT_PUBLIC_SELLER_PORTAL_URL|| "").replace(/\/+$/, "")}/signin`;
 
   useEffect(() => {
     if (isAuthenticated) {
