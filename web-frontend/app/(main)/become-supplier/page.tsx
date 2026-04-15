@@ -10,7 +10,7 @@ const BecomeSupplierPage = () => {
 
   return (
     <section className="max-w-screen-xl mx-auto px-4 md:px-6 py-12">
-      <p className="text-sm text-gray-600">Redirecting to seller signup...</p>
+      <p className="text-sm text-gray-600">Redirecting to seller signup.......</p>
     </section>
   );
 };

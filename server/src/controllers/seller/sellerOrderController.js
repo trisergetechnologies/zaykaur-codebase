@@ -1,5 +1,22 @@
 import mongoose from "mongoose";
 import Order from "../../models/Order.js";
+import {
+  applyOrderStatusTimestamps,
+  canTransitionOrderStatus,
+} from "../../lib/orderLifecycle.js";
+
+const orderIncludesSeller = (order, sellerId) => {
+  const sellerObjId = mongoose.Types.ObjectId.isValid(String(sellerId))
+    ? new mongoose.Types.ObjectId(String(sellerId))
+    : sellerId;
+  const items = order?.items || [];
+  return items.some((item) => {
+    const sid = item.sellerId;
+    if (sid == null) return false;
+    if (typeof sid.equals === "function" && sid.equals(sellerObjId)) return true;
+    return String(sid) === String(sellerId) || String(sid) === String(sellerObjId);
+  });
+};
 
 const parseDate = (val) => {
   if (!val) return null;
@@ -64,6 +81,66 @@ export const getSellerOrders = async (req, res) => {
           totalPages: Math.max(1, Math.ceil(total / limit)),
         },
       },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      data: null,
+    });
+  }
+};
+
+/**
+ * PATCH order status for seller: same lifecycle rules as admin, but only if the
+ * order contains at least one line item sold by this seller (admins/staff may update any order).
+ */
+export const updateSellerOrderStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!status || !String(status).trim()) {
+      return res.status(200).json({
+        success: false,
+        message: "status is required",
+        data: null,
+      });
+    }
+
+    const nextStatus = String(status).trim();
+    const order = await Order.findById(req.params.orderId);
+    if (!order) {
+      return res.status(200).json({
+        success: false,
+        message: "Order not found",
+        data: null,
+      });
+    }
+
+    const role = req.user?.role;
+    if (role === "seller" && !orderIncludesSeller(order, req.user._id)) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only update orders that include your products",
+        data: null,
+      });
+    }
+
+    if (!canTransitionOrderStatus(order.orderStatus, nextStatus)) {
+      return res.status(200).json({
+        success: false,
+        message: `Invalid transition from '${order.orderStatus}' to '${nextStatus}'`,
+        data: null,
+      });
+    }
+
+    order.orderStatus = nextStatus;
+    applyOrderStatusTimestamps(order, nextStatus, new Date());
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Order status updated successfully",
+      data: order,
     });
   } catch (error) {
     return res.status(500).json({

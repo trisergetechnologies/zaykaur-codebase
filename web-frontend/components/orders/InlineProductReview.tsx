@@ -17,11 +17,15 @@ const MAX_IMAGES = 5;
 const MAX_BYTES = 5 * 1024 * 1024;
 const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.heic,.heif";
 
+const STAR_LABELS = ["", "Terrible", "Poor", "Average", "Good", "Excellent"] as const;
+
 type Staged = { file: File; url: string };
 
 export function InlineProductReview({ productId, orderId, enabled }: Props) {
   const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
   const [commentOpen, setCommentOpen] = useState(false);
+  const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [staged, setStaged] = useState<Staged[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -37,6 +41,8 @@ export function InlineProductReview({ productId, orderId, enabled }: Props) {
   }, []);
 
   if (!enabled) return null;
+
+  const activeLabel = STAR_LABELS[hoverRating || rating] || "";
 
   const openFromStar = (value: number) => {
     setRating(value);
@@ -79,10 +85,6 @@ export function InlineProductReview({ productId, orderId, enabled }: Props) {
     });
   };
 
-  /**
-   * Upload one file per request using the single-file endpoint. Next.js rewrites
-   * sometimes mishandle multipart arrays; sequential `file` uploads are reliable.
-   */
   const uploadReviewImages = async (files: File[]): Promise<{ url: string; alt: string }[]> => {
     if (files.length === 0) return [];
     const out: { url: string; alt: string }[] = [];
@@ -130,7 +132,7 @@ export function InlineProductReview({ productId, orderId, enabled }: Props) {
         productId,
         orderId,
         rating,
-        title: "",
+        title: title.trim(),
         body: body.trim(),
         images,
       });
@@ -172,25 +174,42 @@ export function InlineProductReview({ productId, orderId, enabled }: Props) {
   return (
     <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-700">
       <p className="mb-1.5 text-xs font-medium text-slate-600 dark:text-slate-400">Rate this product</p>
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => openFromStar(s)}
-            className="rounded p-0.5 transition-colors hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 dark:hover:bg-amber-950/30"
-            aria-label={`${s} star${s > 1 ? "s" : ""}`}
-          >
-            <Star
-              className={`h-5 w-5 sm:h-6 sm:w-6 ${
-                s <= rating ? "fill-amber-400 text-amber-400" : "text-slate-300 dark:text-slate-600"
-              }`}
-            />
-          </button>
-        ))}
+      <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
+          {[1, 2, 3, 4, 5].map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => openFromStar(s)}
+              onMouseEnter={() => setHoverRating(s)}
+              onMouseLeave={() => setHoverRating(0)}
+              className="rounded p-0.5 transition-colors hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 dark:hover:bg-amber-950/30"
+              aria-label={`${s} star${s > 1 ? "s" : ""} — ${STAR_LABELS[s]}`}
+            >
+              <Star
+                className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors ${
+                  s <= (hoverRating || rating) ? "fill-amber-400 text-amber-400" : "text-slate-300 dark:text-slate-600"
+                }`}
+              />
+            </button>
+          ))}
+        </div>
+        {activeLabel && (
+          <span className="ml-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+            {activeLabel}
+          </span>
+        )}
       </div>
       {commentOpen && (
         <div className="mt-3 space-y-2">
+          <input
+            type="text"
+            placeholder="Summarize your experience (optional)"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            maxLength={150}
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-400 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+          />
           <Textarea
             placeholder="Share a quick comment (optional)"
             value={body}
@@ -263,6 +282,7 @@ export function InlineProductReview({ productId, orderId, enabled }: Props) {
               className="rounded-lg"
               onClick={() => {
                 setCommentOpen(false);
+                setTitle("");
                 setBody("");
                 setStaged((prev) => {
                   prev.forEach((p) => URL.revokeObjectURL(p.url));

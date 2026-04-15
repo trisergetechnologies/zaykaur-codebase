@@ -27,7 +27,6 @@ const { isAuthenticated } = useAuthStore();
 
   const {
   cartItems,
-  clearCart,
   getTotalPrice,
   getTax,
   getShippingFee,
@@ -73,12 +72,9 @@ const placeOrder = async () => {
     });
 
     if (res.success && res.data) {
-      clearCart();
       toast.success("Order placed successfully", { id: toastId });
       const orderId = res.data.orderNumber || res.data._id || res.data.id;
-      setTimeout(() => {
-        router.push(`/order-success?orderId=${orderId}`);
-      }, 800);
+      router.push(`/order-success?orderId=${encodeURIComponent(String(orderId ?? ""))}`);
       return;
     }
     toast.error(res.message || "Failed to place order", { id: toastId });
@@ -96,8 +92,8 @@ const placeOrder = async () => {
   }
 
   return (
-    <section className="min-h-screen bg-slate-50/60 pt-10 pb-12">
-      <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
+    <section className="min-h-screen bg-slate-50/60 pt-8 pb-10 sm:pt-10 sm:pb-12">
+      <div className="mx-auto w-full max-w-screen-xl px-3 sm:px-6 lg:px-8">
         <CheckoutSteps currentStep={step} />
         <div className="mt-7 grid grid-cols-1 gap-6 lg:grid-cols-12">
           <div className="space-y-4 lg:col-span-8">

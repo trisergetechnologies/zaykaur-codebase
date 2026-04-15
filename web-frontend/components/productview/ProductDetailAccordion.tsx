@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
-import { Check } from "lucide-react";
+import { ChevronDown, Check } from "lucide-react";
 
-type Props = { product: any };
+type Props = { product: any; selectedVariant?: any };
 
-/** Split long description into bullet points (not a paragraph). */
 function descriptionToBullets(text: string): string[] {
   const t = String(text || "").trim();
   if (!t) return [];
@@ -16,7 +14,7 @@ function descriptionToBullets(text: string): string[] {
   return bySentence.length > 1 ? bySentence : [t];
 }
 
-const ProductDetailAccordion = ({ product }: Props) => {
+const ProductDetailAccordion = ({ product, selectedVariant }: Props) => {
   const [openId, setOpenId] = useState<string>("details");
 
   const highlights: string[] = Array.isArray(product?.aboutItem) ? product.aboutItem : [];
@@ -24,6 +22,18 @@ const ProductDetailAccordion = ({ product }: Props) => {
     ? product.specifications
     : [];
   const descriptionBullets = descriptionToBullets(product?.description || "");
+
+  const variantAttrs: { key: string; value: string }[] = [];
+  const defs = product?.variantAttributeDefs ?? [];
+  const attrs = selectedVariant?.attributes ?? {};
+  if (defs.length > 0 && Object.keys(attrs).length > 0) {
+    for (const def of defs) {
+      const val = attrs[def.key];
+      if (val != null && val !== "") {
+        variantAttrs.push({ key: def.label || def.key, value: String(val) });
+      }
+    }
+  }
 
   const items = [
     {
@@ -44,7 +54,13 @@ const ProductDetailAccordion = ({ product }: Props) => {
                 <span className="font-medium text-gray-900">{product.category}</span>
               </div>
             )}
-            {product?.color?.length > 0 && (
+            {variantAttrs.map((va, i) => (
+              <div key={`va-${va.key}-${i}`} className="flex border-b border-gray-100 py-2.5">
+                <span className="w-[36%] shrink-0 text-gray-500">{va.key}</span>
+                <span className="font-medium text-gray-900">{va.value}</span>
+              </div>
+            ))}
+            {product?.color?.length > 0 && variantAttrs.every(v => v.key.toLowerCase() !== "color" && v.key.toLowerCase() !== "colour") && (
               <div className="flex border-b border-gray-100 py-2.5">
                 <span className="w-[36%] shrink-0 text-gray-500">Color</span>
                 <span className="font-medium text-gray-900">{product.color.join(", ")}</span>
@@ -104,10 +120,19 @@ const ProductDetailAccordion = ({ product }: Props) => {
               {item.title}
               <ChevronDown
                 size={18}
-                className={`shrink-0 text-gray-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                className={`shrink-0 text-gray-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
               />
             </button>
-            {isOpen && <div className="border-t border-gray-100 px-4 pb-4 pt-2">{item.content}</div>}
+            <div
+              className="grid transition-[grid-template-rows] duration-300 ease-in-out"
+              style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
+            >
+              <div className="overflow-hidden">
+                <div className="border-t border-gray-100 px-4 pb-4 pt-2">
+                  {item.content}
+                </div>
+              </div>
+            </div>
           </div>
         );
       })}

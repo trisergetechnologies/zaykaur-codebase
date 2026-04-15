@@ -40,6 +40,8 @@ type CartStore = {
   updateQuantity: (id: number | string, quantity: number) => void;
   clearCart: () => void;
   fetchCart: () => Promise<void>;
+  /** After login: push each guest line to the server cart, then refresh. No-op if not logged in or empty. */
+  mergeGuestCartIntoServer: (guestItems: CartItem[]) => Promise<void>;
 
   getTotalPrice: () => number;
   getTax: () => number;
@@ -100,6 +102,40 @@ const useCartStore = create<CartStore>((set, get) => ({
     } catch {
       set({ cartItems: [], _apiTotals: null });
     }
+  },
+
+  mergeGuestCartIntoServer: async (guestItems) => {
+    if (!guestItems.length) return;
+    if (!isLoggedIn()) return;
+    for (const item of guestItems) {
+      const productId = (item.productId || String(item.id || "")).trim();
+      if (!productId) continue;
+      const qty = Math.max(1, Number(item.quantity) || 1);
+      const body: { productId: string; quantity: number; variantId?: string } = {
+        productId,
+        quantity: qty,
+      };
+      if (item.variantId) body.variantId = String(item.variantId);
+      try {
+        const res = await apiPost<ApiCartData>("/api/v1/customer/cart", body);
+        if (res.success && res.data) {
+          set({
+            cartItems: mapApiCartItems(res.data.items),
+            _apiTotals: {
+              itemsTotal: res.data.itemsTotal,
+              taxTotal: res.data.taxTotal,
+              shippingEstimate: res.data.shippingEstimate,
+              grandTotal: res.data.grandTotal,
+            },
+          });
+        } else if (res.message) {
+          toast.error(res.message);
+        }
+      } catch {
+        toast.error("Could not move an item to your cart. Try adding it again.");
+      }
+    }
+    await get().fetchCart();
   },
 
   addToCart: (item) => {

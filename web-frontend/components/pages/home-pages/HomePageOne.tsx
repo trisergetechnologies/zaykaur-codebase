@@ -1,27 +1,32 @@
 import React, { Suspense } from "react";
 import HeroBannerOne from "@/components/hero/HeroBannerOne";
 import ProductsCollectionOne from "@/components/products/ProductsCollectionOne";
-import CategoriesCollection from "@/components/category/CategoriesCollection"; //Ui rendder for Home page 
-
+import CategoriesCollection from "@/components/category/CategoriesCollection";
 
 import Loader from "@/components/others/Loader";
+import LazySection from "@/components/others/LazySection";
 import TopCategoryStrip from "@/components/category/TopCategoryStrip";
 
 import OfferBannerGrid from "@/components/banners/OfferBannerGrid";
-
-
+import { HomepageMerchandisingProvider } from "@/context/HomepageMerchandisingContext";
 
 const HomePageOne = () => {
   return (
-    <section className="overflow-hidden">
-      <HeroBannerOne />
-       <TopCategoryStrip />
-       <Suspense fallback={<Loader />}>
-        <CategoriesCollection />
-      </Suspense>
-      <OfferBannerGrid/>
-      <ProductsCollectionOne />
-    </section>
+    <HomepageMerchandisingProvider>
+      <section className="overflow-hidden">
+        <HeroBannerOne />
+        <TopCategoryStrip />
+        <Suspense fallback={<Loader />}>
+          <CategoriesCollection />
+        </Suspense>
+        <LazySection height="300px" rootMargin="300px">
+          <OfferBannerGrid />
+        </LazySection>
+        <LazySection height="600px" rootMargin="200px">
+          <ProductsCollectionOne />
+        </LazySection>
+      </section>
+    </HomepageMerchandisingProvider>
   );
 };
 

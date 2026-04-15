@@ -1,105 +1,175 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
+import { useHomepageMerchandising } from "@/context/HomepageMerchandisingContext";
+import { normalizeStoreHref } from "@/lib/normalizeStoreHref";
 
-const categories = [
+const defaultCategories = [
   {
     title: "Trending Now",
     image:
       "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=600",
+    link: "/shop?category=fashion",
   },
   {
     title: "Budget Buys",
     image:
       "https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?q=80&w=600",
+    link: "/shop?max=999&sort=price_asc",
   },
   {
     title: "Top Rated Picks",
     image:
       "https://images.unsplash.com/photo-1593032465175-481ac7f401a0?q=80&w=600",
+    link: "/shop?sort=latest",
   },
   {
     title: "Daily Essentials",
     image:
       "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=600",
+    link: "/shop?category=kids",
   },
 ];
 
+const defaultPromo = {
+  image:
+    "https://images.unsplash.com/photo-1607082349566-187342175e2f?q=80&w=800",
+  title: "Download Now",
+  body: "Get exclusive offers and faster checkout on our app.",
+  ctaLabel: "Get App",
+  ctaLink: "",
+};
+
 const OfferBannerGrid = () => {
+  const { payload } = useHomepageMerchandising();
+  const tf = payload?.trendingFashion;
+
+  const sectionTitle = tf?.title?.trim() || "Trending Fashion";
+  const sectionSubtitle =
+    tf?.subtitle?.trim() ||
+    "Discover the latest styles, top rated picks and everyday essentials";
+
+  const promo = tf?.promo?.image
+    ? {
+        image: tf.promo.image,
+        title: tf.promo.title || defaultPromo.title,
+        body: tf.promo.body || defaultPromo.body,
+        ctaLabel: tf.promo.ctaLabel || defaultPromo.ctaLabel,
+        ctaLink: (tf.promo.ctaLink || "").trim(),
+      }
+    : defaultPromo;
+
+  const categories =
+    tf?.tiles?.length &&
+    tf.tiles.every((t) => t.title?.trim() && t.image?.trim())
+      ? tf.tiles.map((t) => ({
+          title: t.title,
+          image: t.image,
+          link: (t.link || "").trim(),
+        }))
+      : defaultCategories;
+
   return (
-    <section className="max-w-[1600px] mx-auto px-4 py-14">
+    <section className="max-w-[1600px] mx-auto px-3 sm:px-4 py-10 sm:py-14">
 
       {/* SECTION HEADER */}
-      <div className="mb-10">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-          Trending Fashion
+      <div className="mb-6 sm:mb-10">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
+          {sectionTitle}
         </h2>
 
         <p className="text-gray-500 mt-2 text-sm md:text-base max-w-lg">
-          Discover the latest styles, top rated picks and everyday essentials
+          {sectionSubtitle}
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-5 gap-6">
+      <div className="grid lg:grid-cols-5 gap-4 sm:gap-6">
 
-        {/* LEFT DOWNLOAD BANNER */}
+        {/* LEFT PROMO BANNER */}
         <motion.div
           initial={{ opacity: 0, x: -40 }}
           whileInView={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="lg:col-span-2 relative rounded-2xl overflow-hidden"
+          className="lg:col-span-2 relative h-[260px] sm:h-[300px] md:h-[360px] lg:h-[min(500px,52vh)] lg:min-h-[360px] rounded-2xl overflow-hidden"
         >
           <Image
-            src="https://images.unsplash.com/photo-1607082349566-187342175e2f?q=80&w=800"
-            alt="Download App"
-            width={600}
-            height={500}
-            className="w-full h-full object-cover"
+            src={promo.image}
+            alt={promo.title}
+            fill
+            sizes="(max-width: 1024px) 100vw, 40vw"
+            className="object-cover"
+            priority={false}
           />
 
-          <div className="absolute inset-0 bg-black/40 flex flex-col justify-center p-8 text-white">
-            <h2 className="text-3xl font-bold mb-2">
-              Download Now
+          <div className="absolute inset-0 bg-black/40 flex flex-col justify-center p-4 sm:p-6 md:p-8 text-white">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2">
+              {promo.title}
             </h2>
 
-            <p className="text-sm text-gray-200">
-              Get exclusive offers and faster checkout on our app.
+            <p className="text-xs sm:text-sm text-gray-200 line-clamp-3 sm:line-clamp-none">
+              {promo.body}
             </p>
 
-            <button className="mt-5 bg-white text-black px-5 py-2 rounded-full w-fit text-sm font-medium hover:bg-gray-200">
-              Get App
-            </button>
+            {promo.ctaLink ? (
+              <Link
+                href={normalizeStoreHref(promo.ctaLink)}
+                className="mt-3 sm:mt-5 inline-flex items-center justify-center rounded-full bg-white text-black px-4 py-2 sm:px-5 text-xs sm:text-sm font-medium hover:bg-gray-200 min-h-[44px] sm:min-h-0 w-fit"
+              >
+                {promo.ctaLabel}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className="mt-3 sm:mt-5 bg-white text-black px-4 py-2 sm:px-5 rounded-full w-fit text-xs sm:text-sm font-medium hover:bg-gray-200 min-h-[44px] sm:min-h-0 flex items-center justify-center"
+              >
+                {promo.ctaLabel}
+              </button>
+            )}
           </div>
         </motion.div>
 
         {/* CATEGORY CARDS */}
-        <div className="lg:col-span-3 grid sm:grid-cols-2 gap-6">
-          {categories.map((item, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className="group relative rounded-2xl overflow-hidden cursor-pointer"
-            >
-              <Image
-                src={item.image}
-                alt={item.title}
-                width={400}
-                height={300}
-                className="w-full h-[180px] object-cover group-hover:scale-110 transition duration-500"
-              />
+        <div className="lg:col-span-3 grid sm:grid-cols-2 gap-4 sm:gap-6">
+          {categories.map((item, index) => {
+            const inner = (
+              <>
+                <Image
+                  src={item.image}
+                  alt={item.title}
+                  width={400}
+                  height={300}
+                  className="w-full h-[140px] sm:h-[160px] md:h-[180px] object-cover group-hover:scale-110 transition duration-500"
+                />
 
-              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                <h3 className="text-white text-lg font-semibold">
-                  {item.title}
-                </h3>
-              </div>
-            </motion.div>
-          ))}
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center px-2">
+                  <h3 className="text-white text-base sm:text-lg font-semibold text-center">
+                    {item.title}
+                  </h3>
+                </div>
+              </>
+            );
+            return (
+              <motion.div
+                key={`${item.title}-${index}`}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="group relative rounded-2xl overflow-hidden cursor-pointer"
+              >
+                {item.link?.trim() ? (
+                  <Link href={normalizeStoreHref(item.link)} className="block">
+                    {inner}
+                  </Link>
+                ) : (
+                  inner
+                )}
+              </motion.div>
+            );
+          })}
         </div>
 
       </div>

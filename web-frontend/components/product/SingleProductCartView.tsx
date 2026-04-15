@@ -13,7 +13,7 @@ import { useProductCardReviewStats } from "@/hooks/useProductCardReviewStats";
 
 const PLACEHOLDER = "https://picsum.photos/seed/placeholder/400/500";
 
-const SingleProductCartView = ({ product }: { product: Product }) => {
+const SingleProductCartView = ({ product, index = 0 }: { product: Product; index?: number }) => {
   const { discount, images, name, price, mrp, rating, stock, id, brand, reviews, reviewCount } = product;
 
   const hasExplicitMrp = typeof mrp === "number" && mrp > price;
@@ -55,23 +55,26 @@ const SingleProductCartView = ({ product }: { product: Product }) => {
     inWishlist ? removeFromWishlist(id) : addToWishlist(product);
   };
 
+  const staggerDelay = Math.min(index * 0.04, 0.6);
+
   return (
     <Link href={`/shop/product/${id}`} className="block h-full">
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         whileHover={{ y: -7 }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
+        transition={{ duration: 0.35, ease: "easeOut", delay: staggerDelay }}
         className="zk-premium-card group relative h-full overflow-hidden rounded-3xl border border-white/70 bg-white/90 backdrop-blur-sm flex flex-col"
       >
         <span className="zk-card-gradient-ring pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
         {/* IMAGE */}
-        <div className="relative aspect-[4/5] bg-slate-100/70 overflow-hidden">
+        <div className="relative aspect-square sm:aspect-[4/5] bg-slate-100/70 overflow-hidden">
           <Image
             src={imgSrc}
             alt={name}
             fill
+            loading="lazy"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
           />
@@ -110,7 +113,7 @@ const SingleProductCartView = ({ product }: { product: Product }) => {
         </div>
 
         {/* CONTENT */}
-        <div className="relative p-4 flex flex-col gap-2 flex-1 bg-white/95">
+        <div className="relative p-2.5 sm:p-4 flex flex-col gap-1.5 sm:gap-2 flex-1 bg-white/95">
           {/* Brand */}
           {brand && (
             <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400 font-semibold truncate">
@@ -119,12 +122,12 @@ const SingleProductCartView = ({ product }: { product: Product }) => {
           )}
 
           {/* Name */}
-          <h3 className="text-[15px] font-semibold text-slate-900 line-clamp-2 leading-snug transition min-h-[2.7rem] group-hover:text-slate-700">
+          <h3 className="text-sm sm:text-[15px] font-semibold text-slate-900 line-clamp-2 leading-snug transition sm:min-h-[2.7rem] group-hover:text-slate-700">
             {name}
           </h3>
 
-          {/* Reviews — matches PDP public review stats when list payload omits them */}
-          <div className="flex min-h-[1.35rem] flex-wrap items-center gap-1.5">
+          {/* Reviews */}
+          <div className="flex min-h-0 sm:min-h-[1.35rem] flex-wrap items-center gap-1.5">
             {displayAvg > 0 ? (
               <>
                 <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
@@ -147,7 +150,7 @@ const SingleProductCartView = ({ product }: { product: Product }) => {
 
           {/* Price */}
           <div className="flex items-baseline gap-2 mt-auto pt-1.5">
-            <span className="text-lg font-extrabold tracking-tight text-slate-900">
+            <span className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">
               ₹{discountedPrice.toLocaleString()}
             </span>
             {strikePrice != null && strikePrice > discountedPrice && (
@@ -161,7 +164,7 @@ const SingleProductCartView = ({ product }: { product: Product }) => {
           <button
             disabled={outOfStock}
             onClick={handleQuickAdd}
-            className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold text-white zk-premium-button disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed"
+            className="mt-1.5 sm:mt-2 w-full min-h-[44px] flex items-center justify-center gap-2 py-2 sm:py-2.5 rounded-xl text-xs font-semibold text-white zk-premium-button disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed"
           >
             <ShoppingCart size={14} />
             {outOfStock ? "Out of Stock" : "Add to Cart"}

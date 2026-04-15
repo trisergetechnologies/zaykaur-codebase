@@ -1,14 +1,22 @@
 "use client";
 
+import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import useCartStore from "@/store/cartStore";
 
 const OrderSuccessPage = () => {
 
   const params = useSearchParams();
   const orderId = params.get("orderId");
+  const fetchCart = useCartStore((s) => s.fetchCart);
+
+  useEffect(() => {
+    useCartStore.setState({ cartItems: [], _apiTotals: null });
+    fetchCart().catch(() => {});
+  }, [fetchCart]);
 
   return (
     <section className="min-h-screen flex items-center justify-center bg-gray-50 px-4">

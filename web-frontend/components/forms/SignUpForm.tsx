@@ -76,7 +76,7 @@ const SignUpForm = () => {
       </div>
 
       {/* RIGHT SIDE: The Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-8 sm:p-12">
         <div className="w-full max-w-md">
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Create Account</h2>

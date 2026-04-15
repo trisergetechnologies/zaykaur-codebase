@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Product } from "@/types";
-import type { PublicReviewItem, PublicReviewStats } from "@/types/publicReview";
+import type { PublicReviewItem, PublicReviewStats, PublicReviewDistribution } from "@/types/publicReview";
 import { apiGet } from "@/lib/api";
 import { isMongoObjectId } from "@/lib/isMongoObjectId";
 import ProductGallery from "./ProductGallery";
@@ -31,48 +31,60 @@ const ProductLayout = ({ product }: { product: Product }) => {
   const [reviewItems, setReviewItems] = useState<PublicReviewItem[]>([]);
   const [avgRating, setAvgRating] = useState(Number(product.rating) || 0);
   const [totalReviews, setTotalReviews] = useState(product.reviewCount ?? 0);
+  const [distribution, setDistribution] = useState<PublicReviewDistribution | undefined>();
+  const [reviewSort, setReviewSort] = useState<"recent" | "helpful">("recent");
+
+  const productId = String(product._id ?? product.id ?? "").trim();
+
+  const fetchReviews = useCallback(
+    (sort: "recent" | "helpful") => {
+      if (!isMongoObjectId(productId)) {
+        setReviewsLoading(false);
+        setReviewItems([]);
+        setAvgRating(Number(product.rating) || 0);
+        setTotalReviews(product.reviewCount ?? 0);
+        setDistribution(undefined);
+        return;
+      }
+      setReviewsLoading(true);
+      const sortParam = sort === "helpful" ? "&sort=helpful" : "";
+      apiGet<{ items: PublicReviewItem[]; stats: PublicReviewStats }>(
+        `/api/v1/public/products/${productId}/reviews?limit=20${sortParam}`
+      )
+        .then((res) => {
+          if (res.success && res.data) {
+            const s = res.data.stats;
+            setAvgRating(s?.averageRating != null ? Number(s.averageRating) : Number(product.rating) || 0);
+            setTotalReviews(s?.totalReviews != null ? Number(s.totalReviews) : 0);
+            setDistribution(s?.distribution);
+            setReviewItems(Array.isArray(res.data.items) ? res.data.items : []);
+          } else {
+            setAvgRating(Number(product.rating) || 0);
+            setTotalReviews(product.reviewCount ?? 0);
+            setReviewItems([]);
+            setDistribution(undefined);
+          }
+        })
+        .catch(() => {
+          setAvgRating(Number(product.rating) || 0);
+          setTotalReviews(product.reviewCount ?? 0);
+          setReviewItems([]);
+          setDistribution(undefined);
+        })
+        .finally(() => {
+          setReviewsLoading(false);
+        });
+    },
+    [productId, product.rating, product.reviewCount]
+  );
 
   useEffect(() => {
-    const pid = String(product._id ?? product.id ?? "").trim();
-    if (!isMongoObjectId(pid)) {
-      setReviewsLoading(false);
-      setReviewItems([]);
-      setAvgRating(Number(product.rating) || 0);
-      setTotalReviews(product.reviewCount ?? 0);
-      return;
-    }
-    let cancelled = false;
-    setReviewsLoading(true);
-    apiGet<{ items: PublicReviewItem[]; stats: PublicReviewStats }>(
-      `/api/v1/public/products/${pid}/reviews?limit=20`
-    )
-      .then((res) => {
-        if (cancelled) return;
-        if (res.success && res.data) {
-          const s = res.data.stats;
-          setAvgRating(s?.averageRating != null ? Number(s.averageRating) : Number(product.rating) || 0);
-          setTotalReviews(s?.totalReviews != null ? Number(s.totalReviews) : 0);
-          setReviewItems(Array.isArray(res.data.items) ? res.data.items : []);
-        } else {
-          setAvgRating(Number(product.rating) || 0);
-          setTotalReviews(product.reviewCount ?? 0);
-          setReviewItems([]);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setAvgRating(Number(product.rating) || 0);
-          setTotalReviews(product.reviewCount ?? 0);
-          setReviewItems([]);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setReviewsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [product._id, product.id, product.rating, product.reviewCount]);
+    fetchReviews(reviewSort);
+  }, [fetchReviews, reviewSort]);
+
+  const handleSortChange = useCallback((sort: "recent" | "helpful") => {
+    setReviewSort(sort);
+  }, []);
 
   useEffect(() => {
     const list = (product.variants ?? []) as any[];
@@ -169,7 +181,6 @@ const ProductLayout = ({ product }: { product: Product }) => {
     return availability;
   }, [selectors, selection, variants]);
 
-  /** Only selected variant images — no mixing other variants (per product requirement). */
   const galleryImages = useMemo(() => {
     const urls: string[] = [];
     const seen = new Set<string>();
@@ -187,9 +198,8 @@ const ProductLayout = ({ product }: { product: Product }) => {
   }, [selectedVariant]);
 
   return (
-    <div className="min-h-screen bg-[#fafafa] pb-24 md:pb-0">
-      <div className="mx-auto max-w-[1200px] px-3 py-3 md:px-4">
-        {/* Classic PDP: gallery left, buy box right — Myntra-inspired */}
+    <div className="min-h-screen bg-[#fafafa] pb-24 md:pb-0 overflow-x-hidden">
+      <div className="mx-auto max-w-[1200px] px-2.5 py-3 sm:px-3 md:px-4">
         <div className="flex flex-col overflow-hidden rounded-sm border border-gray-200 bg-white shadow-sm md:flex-row">
           <div className="border-b border-gray-100 p-3 md:w-[58%] md:border-b-0 md:border-r md:p-5">
             <ProductGallery images={galleryImages} />
@@ -208,7 +218,7 @@ const ProductLayout = ({ product }: { product: Product }) => {
         </div>
 
         <div className="mt-4">
-          <ProductDetailAccordion product={product} />
+          <ProductDetailAccordion product={product} selectedVariant={selectedVariant} />
         </div>
 
         <div className="mt-4 flex flex-col border border-gray-200 bg-white shadow-sm md:flex-row">
@@ -226,6 +236,9 @@ const ProductLayout = ({ product }: { product: Product }) => {
             items={reviewItems}
             avgRating={avgRating}
             totalReviews={totalReviews}
+            distribution={distribution}
+            sort={reviewSort}
+            onSortChange={handleSortChange}
           />
         </div>
       </div>

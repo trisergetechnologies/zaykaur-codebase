@@ -187,9 +187,9 @@ function ShopContent() {
   );
 
   return (
-    <div className="max-w-screen-xl mx-auto px-4 py-8">
+    <div className="max-w-screen-xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 mb-4 sm:mb-6">
         <a href="/" className="hover:text-gray-900">Home</a>
         <span>/</span>
         <span className="text-gray-900 font-medium">
@@ -208,8 +208,8 @@ function ShopContent() {
         {/* Main Content */}
         <div className="flex-1 min-w-0 zk-premium-surface rounded-3xl border border-slate-100/80 p-4 md:p-6">
           {/* Toolbar */}
-          <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
               {/* Mobile filter toggle */}
               <button
                 onClick={() => setMobileFilterOpen(true)}
@@ -224,12 +224,12 @@ function ShopContent() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
               {/* Sort */}
               <select
                 value={currentSort}
                 onChange={(e) => updateParam("sort", e.target.value)}
-                className="border rounded-lg px-3 py-2 text-sm bg-white"
+                className="border rounded-lg px-3 py-2 text-sm bg-white min-w-0 flex-1 sm:flex-none max-w-full sm:max-w-[220px]"
               >
                 {SORT_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -292,7 +292,7 @@ function ShopContent() {
               </button>
             </div>
           ) : view === "grid" ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
               {products.map((product) => (
                 <SingleProductCartView key={product.id} product={product} />
               ))}

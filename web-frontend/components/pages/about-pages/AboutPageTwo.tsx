@@ -3,19 +3,19 @@ import React from "react";
 
 const AboutPageTwo = () => {
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+    <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 sm:gap-16 items-center">
         {/* Left Column: Introduction */}
         <div>
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6">
             Our Story
           </h2>
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
+          <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 mb-6">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam eget
             ipsum id neque laoreet tincidunt. Suspendisse potenti. Curabitur
             fringilla nunc ac diam consequat, et mattis magna pulvinar.
           </p>
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
+          <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 mb-6">
             Fusce at maximus mi. Aliquam bibendum magna sit amet nisi efficitur,
             ut viverra nisi lacinia. Mauris sed mi a turpis blandit facilisis.
             Nunc id ex a nibh cursus convallis.
@@ -24,7 +24,7 @@ const AboutPageTwo = () => {
 
         {/* Right Column: Team */}
         <div>
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6">
             Our Team
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

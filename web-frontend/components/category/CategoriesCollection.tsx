@@ -4,8 +4,10 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react"; // npm i lucide-react
+import { useHomepageMerchandising } from "@/context/HomepageMerchandisingContext";
+import { normalizeStoreHref } from "@/lib/normalizeStoreHref";
 
-const deals = [
+const defaultDeals = [
   {
     title: "Trending Now",
     subtitle: "Latest Fashion Picks",
@@ -39,28 +41,54 @@ const deals = [
 ];
 
 const BestDealsSection = () => {
+  const { payload } = useHomepageMerchandising();
+  const bd = payload?.bestDeals;
+  const deals =
+    bd?.tiles?.length &&
+    bd.tiles.every(
+      (t) =>
+        t.title?.trim() &&
+        t.image?.trim() &&
+        t.gridClass?.trim()
+    )
+      ? bd.tiles.map((t) => ({
+          title: t.title,
+          subtitle: t.subtitle,
+          image: t.image,
+          link: t.link,
+          gridClass: t.gridClass,
+          badge: t.badge,
+        }))
+      : defaultDeals;
+
+  const sectionEyebrow = bd?.sectionEyebrow?.trim() || "Exclusive Offers";
+  const sectionTitle = bd?.sectionTitle?.trim() || "BEST DEALS";
+  const exploreLabel = bd?.exploreAllLabel?.trim() || "Explore All Deals";
+  const exploreHref = normalizeStoreHref(bd?.exploreAllHref || "/shop");
+
   return (
-    <section className="max-w-[1400px] mx-auto px-6 py-20">
+    <section className="max-w-[1400px] mx-auto px-3 sm:px-6 py-12 sm:py-20">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 gap-4">
         <div>
-          <span className="text-pink-600 font-bold tracking-widest uppercase text-sm">Exclusive Offers</span>
-          <h2 className="text-4xl md:text-5xl font-black text-gray-900 mt-2 italic">
-            BEST DEALS<span className="text-pink-600">.</span>
+          <span className="text-pink-600 font-bold tracking-widest uppercase text-sm">{sectionEyebrow}</span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 mt-2 italic">
+            {sectionTitle}
+            <span className="text-pink-600">.</span>
           </h2>
         </div>
 
         <Link
-          href="/shop"
-          className="group flex items-center gap-2 text-lg font-bold hover:text-pink-600 transition-colors"
+          href={exploreHref}
+          className="group flex items-center gap-2 text-base sm:text-lg font-bold hover:text-pink-600 transition-colors shrink-0"
         >
-          Explore All Deals
+          {exploreLabel}
           <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
         </Link>
       </div>
 
       {/* Grid Layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-4 h-[auto] lg:h-[700px]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-4 h-auto lg:h-[700px]">
         {deals.map((deal, index) => (
           <motion.div
             key={index}
@@ -68,9 +96,9 @@ const BestDealsSection = () => {
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
             viewport={{ once: true }}
-            className={`${deal.gridClass} relative group cursor-pointer overflow-hidden rounded-3xl bg-gray-100`}
+            className={`${deal.gridClass} relative min-h-[220px] sm:min-h-[200px] lg:min-h-0 group cursor-pointer overflow-hidden rounded-3xl bg-gray-100`}
           >
-            <Link href={deal.link} className="block w-full h-full">
+            <Link href={normalizeStoreHref(deal.link)} className="block w-full h-full">
               {/* Image with Parallax-like hover */}
               <Image
                 src={deal.image}
@@ -92,11 +120,11 @@ const BestDealsSection = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
 
               {/* Content */}
-              <div className="absolute bottom-0 left-0 p-8 w-full transform translate-y-2 group-hover:translate-y-0 transition-transform">
+              <div className="absolute bottom-0 left-0 p-4 sm:p-6 md:p-8 w-full transform translate-y-2 group-hover:translate-y-0 transition-transform">
                 <p className="text-pink-400 text-xs font-bold uppercase mb-1 tracking-widest">
                   {deal.subtitle}
                 </p>
-                <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-3 sm:mb-4">
                   {deal.title}
                 </h3>
                 

@@ -1,0 +1,101 @@
+import { getDefaultHomepageContent } from "./homepageDefaults.js";
+
+const t = (s) => (typeof s === "string" ? s.trim() : s ? String(s).trim() : "");
+
+function isValidHeroSlides(slides) {
+  return (
+    Array.isArray(slides) &&
+    slides.length > 0 &&
+    slides.every(
+      (s) =>
+        s &&
+        Array.isArray(s.images) &&
+        s.images.length > 0 &&
+        Boolean(t(s.images[0]))
+    )
+  );
+}
+
+function isValidTopCategoryStrip(items) {
+  return (
+    Array.isArray(items) &&
+    items.length > 0 &&
+    items.every((c) => c && t(c.name) && t(c.slug) && t(c.image))
+  );
+}
+
+function isValidBestDealTiles(tiles) {
+  return (
+    Array.isArray(tiles) &&
+    tiles.length > 0 &&
+    tiles.every((x) => x && t(x.title) && t(x.image) && t(x.gridClass))
+  );
+}
+
+function isValidTrendingTiles(tiles) {
+  return (
+    Array.isArray(tiles) &&
+    tiles.length > 0 &&
+    tiles.every((x) => x && t(x.title) && t(x.image))
+  );
+}
+
+/**
+ * Public storefront: any section that is missing, empty, or invalid falls back
+ * to bundled defaults (same as original static homepage).
+ */
+export function mergeHomepageForPublic(saved) {
+  const defaults = getDefaultHomepageContent();
+  const o = saved && typeof saved === "object" ? saved : {};
+
+  const heroSlides = isValidHeroSlides(o.heroSlides)
+    ? o.heroSlides
+    : defaults.heroSlides;
+
+  const topCategoryStrip = isValidTopCategoryStrip(o.topCategoryStrip)
+    ? o.topCategoryStrip
+    : defaults.topCategoryStrip;
+
+  let bestDeals = defaults.bestDeals;
+  if (isValidBestDealTiles(o.bestDeals?.tiles)) {
+    const d = defaults.bestDeals;
+    const b = o.bestDeals;
+    bestDeals = {
+      sectionEyebrow: t(b.sectionEyebrow) || d.sectionEyebrow,
+      sectionTitle: t(b.sectionTitle) || d.sectionTitle,
+      exploreAllLabel: t(b.exploreAllLabel) || d.exploreAllLabel,
+      exploreAllHref: t(b.exploreAllHref) || d.exploreAllHref,
+      tiles: b.tiles,
+    };
+  }
+
+  let trendingFashion = defaults.trendingFashion;
+  if (isValidTrendingTiles(o.trendingFashion?.tiles)) {
+    const td = defaults.trendingFashion;
+    const tf = o.trendingFashion;
+    const p = tf.promo || {};
+    const promoImage = t(p.image);
+    trendingFashion = {
+      title: t(tf.title) || td.title,
+      subtitle: t(tf.subtitle) || td.subtitle,
+      promo: promoImage
+        ? {
+            image: t(p.image),
+            title: t(p.title) || td.promo.title,
+            body: t(p.body) || td.promo.body,
+            ctaLabel: t(p.ctaLabel) || td.promo.ctaLabel,
+            ctaLink: p.ctaLink != null ? String(p.ctaLink).trim() : "",
+          }
+        : { ...td.promo },
+      tiles: tf.tiles,
+    };
+  }
+
+  return {
+    heroSlides,
+    topCategoryStrip,
+    bestDeals,
+    trendingFashion,
+    updatedAt: o.updatedAt ?? null,
+  };
+}

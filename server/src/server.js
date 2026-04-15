@@ -33,8 +33,8 @@ app.use(
 );
 app.use(requestId);
 app.use(httpLogger);
-app.use(express.json({ limit: "10kb" }));
-app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+app.use(express.json({ limit: "512kb" }));
+app.use(express.urlencoded({ extended: true, limit: "512kb" }));
 // express-mongo-sanitize middleware crashes on Express 5 because req.query is
 // a read-only getter. Apply sanitization only to body/params/headers manually.
 app.use((req, _res, next) => {

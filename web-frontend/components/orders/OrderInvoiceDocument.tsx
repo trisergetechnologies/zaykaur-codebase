@@ -17,10 +17,10 @@ export function OrderInvoiceDocument({ order }: Props) {
       <header className="border-b border-slate-200 pb-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
           <div>
-            <p className="text-xl font-bold tracking-tight">{STORE_LEGAL_NAME}</p>
+            <p className="text-lg sm:text-xl font-bold tracking-tight">{STORE_LEGAL_NAME}</p>
             <p className="mt-1 text-sm text-slate-600">Tax invoice / Bill of supply</p>
           </div>
-          <div className="text-right text-sm">
+          <div className="text-left text-sm sm:text-right sm:shrink-0">
             <p>
               <span className="text-slate-500">Invoice ref:</span>{" "}
               <span className="font-semibold">{order.orderNumber}</span>

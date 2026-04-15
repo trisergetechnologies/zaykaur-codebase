@@ -52,7 +52,7 @@ const useAuthStore = create<AuthState>()(
       login: async (email, password) => {
         set({ isLoading: true });
         try {
-          // Reset ephemeral shopping state before rehydrating from authenticated APIs.
+          const guestCartSnapshot = useCartStore.getState().cartItems.map((c) => ({ ...c }));
           useWishlistStore.getState().resetWishlist();
           useCartStore.getState().clearCart();
           const res = await apiPost<{
@@ -67,10 +67,9 @@ const useAuthStore = create<AuthState>()(
               user: res.data.user,
               isAuthenticated: true,
             });
-            await Promise.all([
-              useWishlistStore.getState().fetchWishlist(),
-              useCartStore.getState().fetchCart(),
-            ]);
+            await useWishlistStore.getState().fetchWishlist();
+            await useCartStore.getState().fetchCart();
+            await useCartStore.getState().mergeGuestCartIntoServer(guestCartSnapshot);
           }
           return res;
         } finally {
@@ -89,6 +88,7 @@ const useAuthStore = create<AuthState>()(
               data: null,
             };
           }
+          const guestCartSnapshot = useCartStore.getState().cartItems.map((c) => ({ ...c }));
           useWishlistStore.getState().resetWishlist();
           useCartStore.getState().clearCart();
           const res = await apiPost<{
@@ -110,10 +110,9 @@ const useAuthStore = create<AuthState>()(
               user: res.data.user,
               isAuthenticated: true,
             });
-            await Promise.all([
-              useWishlistStore.getState().fetchWishlist(),
-              useCartStore.getState().fetchCart(),
-            ]);
+            await useWishlistStore.getState().fetchWishlist();
+            await useCartStore.getState().fetchCart();
+            await useCartStore.getState().mergeGuestCartIntoServer(guestCartSnapshot);
           }
           return res;
         } finally {

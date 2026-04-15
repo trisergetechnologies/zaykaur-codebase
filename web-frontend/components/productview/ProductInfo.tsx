@@ -1,6 +1,7 @@
 "use client";
 
-import { Heart, ShoppingBag, Star, Zap } from "lucide-react";
+import { useState } from "react";
+import { Heart, ShoppingBag, Star, Zap, Ruler, X } from "lucide-react";
 import useCartStore from "@/store/cartStore";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -35,6 +36,52 @@ const isSizeKey = (key: string) => {
   return k === "size" || k === "sizes" || k.includes("size");
 };
 
+const CSS_COLOR_MAP: Record<string, string> = {
+  "navy blue": "#001f3f",
+  "sky blue": "#87ceeb",
+  "light blue": "#add8e6",
+  "royal blue": "#4169e1",
+  "baby blue": "#89cff0",
+  "dark blue": "#00008b",
+  "dark green": "#006400",
+  "light green": "#90ee90",
+  "olive green": "#556b2f",
+  "forest green": "#228b22",
+  "lime green": "#32cd32",
+  "hot pink": "#ff69b4",
+  "light pink": "#ffb6c1",
+  "deep pink": "#ff1493",
+  "dark red": "#8b0000",
+  "wine red": "#722f37",
+  maroon: "#800000",
+  burgundy: "#800020",
+  mustard: "#ffdb58",
+  charcoal: "#36454f",
+  "off white": "#faf0e6",
+  "off-white": "#faf0e6",
+  cream: "#fffdd0",
+  ivory: "#fffff0",
+  rust: "#b7410e",
+  peach: "#ffcba4",
+  lavender: "#e6e6fa",
+  mauve: "#e0b0ff",
+  taupe: "#483c32",
+  "sea green": "#2e8b57",
+  "steel blue": "#4682b4",
+  "slate gray": "#708090",
+  multicolor: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)",
+  multi: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)",
+};
+
+function resolveSwatchColor(value: string): { bg: string; isGradient: boolean } {
+  const lower = value.toLowerCase().trim();
+  const mapped = CSS_COLOR_MAP[lower];
+  if (mapped) {
+    return { bg: mapped, isGradient: mapped.includes("gradient") };
+  }
+  return { bg: lower, isGradient: false };
+}
+
 const ProductInfo = ({
   product,
   reviewSummary,
@@ -46,6 +93,7 @@ const ProductInfo = ({
 }: Props) => {
   const router = useRouter();
   const { addToCart } = useCartStore();
+  const [sizeChartOpen, setSizeChartOpen] = useState(false);
 
   const variants = (product.variants ?? []) as any[];
   const selectors = (product.variantSelectors ?? []) as VariantSelector[];
@@ -132,31 +180,38 @@ const ProductInfo = ({
 
     if (colorMode) {
       return (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2.5">
           {sel.options.map((opt) => {
             const act = selection[sel.key] === opt.value;
             const ok = avail?.has(opt.value) ?? opt.inStock;
+            const { bg, isGradient } = resolveSwatchColor(opt.value);
             return (
-              <button
-                key={opt.value}
-                type="button"
-                disabled={!ok}
-                onClick={() => onSelectAttribute(sel.key, opt.value)}
-                title={opt.value}
-                className={`relative h-9 w-9 rounded-full border-2 transition ${
-                  act ? "border-[#ff3f6c] ring-2 ring-pink-100" : "border-gray-200 hover:border-gray-400"
-                } ${!ok ? "cursor-not-allowed opacity-30" : ""}`}
-              >
-                <span
-                  className="absolute inset-1 rounded-full"
-                  style={{ backgroundColor: opt.value.toLowerCase() }}
-                />
-                {!ok && (
-                  <span className="absolute inset-0 flex items-center justify-center">
-                    <span className="block h-[2px] w-full rotate-45 bg-red-400" />
-                  </span>
-                )}
-              </button>
+              <div key={opt.value} className="group/swatch relative">
+                <button
+                  type="button"
+                  disabled={!ok}
+                  onClick={() => onSelectAttribute(sel.key, opt.value)}
+                  title={opt.value}
+                  className={`relative h-10 w-10 rounded-full border-2 transition ${
+                    act ? "border-[#ff3f6c] ring-2 ring-pink-100" : "border-gray-200 hover:border-gray-400"
+                  } ${!ok ? "cursor-not-allowed opacity-30" : ""}`}
+                >
+                  <span
+                    className="absolute inset-1 rounded-full"
+                    style={isGradient ? { background: bg } : { backgroundColor: bg }}
+                  />
+                  {!ok && (
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <span className="block h-[2px] w-full rotate-45 bg-red-400" />
+                    </span>
+                  )}
+                </button>
+                {/* tooltip */}
+                <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-[10px] font-medium text-white opacity-0 transition-opacity group-hover/swatch:opacity-100">
+                  {opt.value}
+                  {!ok && " (Out of stock)"}
+                </span>
+              </div>
             );
           })}
         </div>
@@ -175,7 +230,7 @@ const ProductInfo = ({
                 type="button"
                 disabled={!ok}
                 onClick={() => onSelectAttribute(sel.key, opt.value)}
-                className={`min-h-[38px] min-w-[42px] rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                className={`min-h-[40px] min-w-[44px] rounded-full border px-3.5 py-1.5 text-sm font-semibold transition ${
                   act
                     ? "border-[#ff3f6c] bg-pink-50 text-[#ff3f6c]"
                     : "border-gray-300 text-gray-800 hover:border-gray-400"
@@ -242,7 +297,6 @@ const ProductInfo = ({
 
         <hr className="border-gray-100" />
 
-        {/* Flipkart-style price row */}
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <span className="text-2xl font-bold text-gray-900">
             ₹{discountedPrice.toLocaleString()}
@@ -260,19 +314,38 @@ const ProductInfo = ({
         </div>
         <p className="text-[11px] font-medium text-[#14958f]">inclusive of all taxes</p>
 
+        {/* Low stock indicator */}
+        {stockLeft > 0 && stockLeft <= 5 && (
+          <p className="text-xs font-semibold text-orange-600">
+            Only {stockLeft} left in stock — hurry!
+          </p>
+        )}
+
         {multiVariant && (
           <div className="space-y-4 pt-1">
             {selectors.length > 0 ? (
               selectors.map((sel) => (
                 <div key={sel.key}>
-                  <p className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-700">
-                    {sel.label}
-                    {selection[sel.key] && (isColorKey(sel.key) || isSizeKey(sel.key)) && (
-                      <span className="ml-1 font-semibold normal-case text-gray-900">
-                        : {selection[sel.key]}
-                      </span>
+                  <div className="mb-2 flex items-center gap-2">
+                    <p className="text-xs font-bold uppercase tracking-wide text-gray-700">
+                      {sel.label}
+                      {selection[sel.key] && (
+                        <span className="ml-1 font-semibold normal-case text-gray-900">
+                          : {selection[sel.key]}
+                        </span>
+                      )}
+                    </p>
+                    {isSizeKey(sel.key) && (
+                      <button
+                        type="button"
+                        onClick={() => setSizeChartOpen(true)}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-[#ff3f6c] hover:underline"
+                      >
+                        <Ruler size={12} />
+                        Size Chart
+                      </button>
                     )}
-                  </p>
+                  </div>
                   {renderSelector(sel)}
                 </div>
               ))
@@ -323,7 +396,6 @@ const ProductInfo = ({
           WISHLIST
         </button>
 
-        {/* Trust row — all requested */}
         <div className="flex flex-wrap gap-2 pt-1">
           <span className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-[10px] font-semibold text-gray-700">
             Free Delivery
@@ -340,7 +412,7 @@ const ProductInfo = ({
         </div>
       </div>
 
-      {/* Mobile: sticky bottom bar (Add to bag + Buy now) */}
+      {/* Mobile: sticky bottom bar */}
       <div className="fixed bottom-0 left-0 right-0 z-50 flex gap-2 border-t border-gray-200 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.08)] md:hidden">
         <button
           onClick={handleAddToCart}
@@ -358,6 +430,54 @@ const ProductInfo = ({
           BUY NOW
         </button>
       </div>
+
+      {/* Size Chart Modal */}
+      {sizeChartOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" onClick={() => setSizeChartOpen(false)}>
+          <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setSizeChartOpen(false)}
+              className="absolute right-3 top-3 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            >
+              <X size={18} />
+            </button>
+            <h3 className="mb-4 text-base font-bold text-gray-900">Size Chart</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="py-2 pr-4 font-semibold text-gray-700">Size</th>
+                    <th className="py-2 pr-4 font-semibold text-gray-700">Chest (in)</th>
+                    <th className="py-2 pr-4 font-semibold text-gray-700">Waist (in)</th>
+                    <th className="py-2 font-semibold text-gray-700">Length (in)</th>
+                  </tr>
+                </thead>
+                <tbody className="text-gray-600">
+                  {[
+                    ["XS", "34", "28", "26"],
+                    ["S", "36", "30", "27"],
+                    ["M", "38", "32", "28"],
+                    ["L", "40", "34", "29"],
+                    ["XL", "42", "36", "30"],
+                    ["XXL", "44", "38", "31"],
+                  ].map(([sz, ch, wa, le]) => (
+                    <tr key={sz} className="border-b border-gray-100">
+                      <td className="py-2 pr-4 font-medium text-gray-900">{sz}</td>
+                      <td className="py-2 pr-4">{ch}</td>
+                      <td className="py-2 pr-4">{wa}</td>
+                      <td className="py-2">{le}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-3 text-[11px] text-gray-400">
+              Measurements are approximate. For best results, measure a garment that fits you well.
+            </p>
+          </div>
+        </div>
+      )}
     </>
   );
 };

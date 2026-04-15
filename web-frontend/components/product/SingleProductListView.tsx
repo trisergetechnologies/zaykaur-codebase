@@ -21,7 +21,7 @@ const SingleProductListView = ({ product }: { product: Product }) => {
       className="group flex flex-col sm:flex-row gap-4 p-3 border border-gray-100 rounded-lg bg-white hover:shadow-md transition-all duration-300"
     >
       {/* IMAGE (Reduced Height) */}
-      <div className="relative w-full sm:w-[180px] aspect-[4/5] bg-gray-50 rounded-md overflow-hidden flex-shrink-0">
+      <div className="relative w-full sm:w-[180px] aspect-square sm:aspect-[4/5] bg-gray-50 rounded-md overflow-hidden flex-shrink-0">
         <Image
           src={images[0]}
           alt={name}

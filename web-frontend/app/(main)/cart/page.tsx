@@ -14,8 +14,8 @@ const CartPage = () => {
   }, [fetchCart]);
 
   return (
-    <section className="min-h-screen bg-slate-50/60 pt-10 pb-12">
-      <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
+    <section className="min-h-screen bg-slate-50/60 pt-8 pb-10 sm:pt-10 sm:pb-12">
+      <div className="mx-auto w-full max-w-screen-xl px-3 sm:px-6 lg:px-8">
         <CheckoutSteps currentStep="cart" />
         <div className="mt-7 grid grid-cols-1 gap-6 lg:grid-cols-12">
           <div className="lg:col-span-8">

@@ -14,18 +14,18 @@ const RelatedProducts = ({ products }: RelatedProductsProps) => {
   if (!products || products.length === 0) return null;
 
   return (
-    <section className="py-20 bg-white border-t border-slate-100 overflow-hidden">
-      <div className="max-w-[1440px] mx-auto px-6 md:px-12">
-        <div className="zk-premium-surface rounded-3xl border border-slate-100/80 p-5 md:p-8">
+    <section className="py-12 sm:py-20 bg-white border-t border-slate-100 overflow-hidden">
+      <div className="max-w-[1440px] mx-auto px-3 sm:px-6 md:px-12">
+        <div className="zk-premium-surface rounded-3xl border border-slate-100/80 p-4 sm:p-5 md:p-8">
         
         {/* HEADER */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
-          <div className="space-y-3">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 sm:mb-10 gap-4 sm:gap-6">
+          <div className="space-y-2 sm:space-y-3">
             <div className="flex items-center gap-2 text-blue-600 font-bold text-[10px] uppercase tracking-[0.2em]">
               <Sparkles size={14} />
               <span>Curated Selection</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
               You May Also <span className="text-slate-400 font-light">Like</span>
             </h2>
           </div>
@@ -40,7 +40,7 @@ const RelatedProducts = ({ products }: RelatedProductsProps) => {
         </div>
 
         {/* THE FIXED GRID/SCROLL AREA */}
-        <div className="relative -mx-6 px-6 md:mx-0 md:px-0">
+        <div className="relative -mx-3 px-3 sm:-mx-6 sm:px-6 md:mx-0 md:px-0">
           <div className="
             flex 
             overflow-x-auto 
@@ -59,8 +59,8 @@ const RelatedProducts = ({ products }: RelatedProductsProps) => {
               <div 
                 key={product.id} 
                 className="
-                  min-w-[75vw]
-                  sm:min-w-[300px] 
+                  min-w-[min(72vw,280px)]
+                  sm:min-w-[280px] 
                   md:min-w-0
                   snap-center
                   first:ml-0

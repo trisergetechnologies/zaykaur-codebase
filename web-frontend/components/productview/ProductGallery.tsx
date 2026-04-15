@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 const ProductGallery = ({ images }: { images: string[] }) => {
@@ -11,13 +11,32 @@ const ProductGallery = ({ images }: { images: string[] }) => {
       : ["/images/product/product-01.jpg"];
 
   const [active, setActive] = useState(0);
+  const [prevActive, setPrevActive] = useState(0);
+  const [fading, setFading] = useState(false);
   const galleryKey = safeImages.join("|");
   const thumbRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setActive(0); }, [galleryKey]);
+  useEffect(() => {
+    setActive(0);
+    setPrevActive(0);
+  }, [galleryKey]);
 
-  const go = (dir: 1 | -1) =>
-    setActive((p) => (p + dir + safeImages.length) % safeImages.length);
+  const changeImage = useCallback(
+    (next: number) => {
+      if (next === active) return;
+      setPrevActive(active);
+      setFading(true);
+      setActive(next);
+      const t = setTimeout(() => setFading(false), 300);
+      return () => clearTimeout(t);
+    },
+    [active]
+  );
+
+  const go = (dir: 1 | -1) => {
+    const next = (active + dir + safeImages.length) % safeImages.length;
+    changeImage(next);
+  };
 
   const scrollThumbs = (dir: 1 | -1) => {
     thumbRef.current?.scrollBy({ top: dir * 72, behavior: "smooth" });
@@ -46,8 +65,8 @@ const ProductGallery = ({ images }: { images: string[] }) => {
             <button
               key={i}
               type="button"
-              onMouseEnter={() => setActive(i)}
-              onClick={() => setActive(i)}
+              onMouseEnter={() => changeImage(i)}
+              onClick={() => changeImage(i)}
               className={`relative h-[58px] w-[58px] shrink-0 overflow-hidden rounded border transition-all ${
                 active === i
                   ? "border-pink-500 shadow-sm"
@@ -73,13 +92,27 @@ const ProductGallery = ({ images }: { images: string[] }) => {
       {/* main image */}
       <div className="relative flex-1">
         <div className="relative aspect-square w-full overflow-hidden rounded bg-gray-50">
+          {/* previous image for crossfade */}
+          {fading && (
+            <Image
+              src={safeImages[prevActive]}
+              alt="Product"
+              fill
+              sizes="(max-width: 768px) 100vw, 45vw"
+              className="pointer-events-none object-contain object-center"
+            />
+          )}
+
+          {/* current image */}
           <Image
             src={safeImages[active]}
             alt="Product"
             fill
             sizes="(max-width: 768px) 100vw, 45vw"
             priority
-            className="object-contain object-center"
+            className={`object-contain object-center transition-opacity duration-300 ${
+              fading ? "opacity-0 animate-[fadeIn_300ms_ease_forwards]" : ""
+            }`}
           />
 
           {safeImages.length > 1 && (
@@ -87,7 +120,7 @@ const ProductGallery = ({ images }: { images: string[] }) => {
               <button
                 type="button"
                 onClick={() => go(-1)}
-                className="absolute left-1 top-1/2 z-10 -translate-y-1/2 rounded-full border border-gray-200 bg-white p-1 shadow-sm transition hover:shadow"
+                className="absolute left-1 top-1/2 z-30 -translate-y-1/2 rounded-full border border-gray-200 bg-white p-1 shadow-sm transition hover:shadow"
                 aria-label="Previous"
               >
                 <ChevronLeft size={16} className="text-gray-600" />
@@ -95,12 +128,19 @@ const ProductGallery = ({ images }: { images: string[] }) => {
               <button
                 type="button"
                 onClick={() => go(1)}
-                className="absolute right-1 top-1/2 z-10 -translate-y-1/2 rounded-full border border-gray-200 bg-white p-1 shadow-sm transition hover:shadow"
+                className="absolute right-1 top-1/2 z-30 -translate-y-1/2 rounded-full border border-gray-200 bg-white p-1 shadow-sm transition hover:shadow"
                 aria-label="Next"
               >
                 <ChevronRight size={16} className="text-gray-600" />
               </button>
             </>
+          )}
+
+          {/* mobile image counter */}
+          {safeImages.length > 1 && (
+            <span className="absolute bottom-2 right-2 z-30 rounded-full bg-black/60 px-2.5 py-0.5 text-[11px] font-semibold tabular-nums text-white md:hidden">
+              {active + 1}/{safeImages.length}
+            </span>
           )}
         </div>
 
@@ -110,7 +150,7 @@ const ProductGallery = ({ images }: { images: string[] }) => {
             <button
               key={i}
               type="button"
-              onClick={() => setActive(i)}
+              onClick={() => changeImage(i)}
               className={`relative h-12 w-12 shrink-0 overflow-hidden rounded border transition-all ${
                 active === i
                   ? "border-pink-500"
