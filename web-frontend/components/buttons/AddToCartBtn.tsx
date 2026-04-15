@@ -6,13 +6,15 @@ import { ShoppingBag } from "lucide-react";
 import useCartStore from "@/store/cartStore";
 import { showToast } from "@/lib/showToast";
 import { CartItem } from "@/types";
+import { cn } from "@/lib/utils";
 
 interface AddToCartBtnProps {
   product: CartItem;
   disabled?: boolean;
+  className?: string;
 }
 
-const AddToCartBtn = ({ product, disabled }: AddToCartBtnProps) => {
+const AddToCartBtn = ({ product, disabled, className }: AddToCartBtnProps) => {
   const { addToCart } = useCartStore();
 
   const handleAddToCart = () => {
@@ -26,7 +28,8 @@ const AddToCartBtn = ({ product, disabled }: AddToCartBtnProps) => {
       onClick={handleAddToCart}
       disabled={disabled}
       variant="outline"
-      className={`
+      className={cn(
+        `
         w-full h-14 rounded-md text-base font-bold flex items-center justify-center gap-3
         transition-all duration-200 border-2
         ${
@@ -34,7 +37,9 @@ const AddToCartBtn = ({ product, disabled }: AddToCartBtnProps) => {
             ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed"
             : "border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white active:scale-[0.98]"
         }
-      `}
+      `,
+        className
+      )}
     >
       <ShoppingBag size={18} strokeWidth={2.5} />
       ADD TO BAG

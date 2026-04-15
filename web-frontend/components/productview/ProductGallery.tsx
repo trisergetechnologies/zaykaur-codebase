@@ -4,7 +4,13 @@ import Image from "next/image";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 
-const ProductGallery = ({ images }: { images: string[] }) => {
+const ProductGallery = ({
+  images,
+  isInModal = false,
+}: {
+  images: string[];
+  isInModal?: boolean;
+}) => {
   const safeImages =
     Array.isArray(images) && images.length > 0
       ? images
@@ -59,7 +65,7 @@ const ProductGallery = ({ images }: { images: string[] }) => {
         <div
           ref={thumbRef}
           className="flex flex-col gap-1.5 overflow-y-auto scrollbar-hide"
-          style={{ maxHeight: 360 }}
+          style={{ maxHeight: isInModal ? 240 : 360 }}
         >
           {safeImages.map((src, i) => (
             <button

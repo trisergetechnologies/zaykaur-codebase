@@ -1,7 +1,5 @@
 import { Product } from "@/types";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 function collectAllVariantImages(p: any): string[] {
   const urls: string[] = [];
   const seen = new Set<string>();
@@ -37,7 +35,7 @@ function normalizeVariantImages(variant: any): { url: string; alt: string }[] {
         alt: String(img?.alt || "").trim(),
       };
     })
-    .filter((img) => !!img.url);
+    .filter((img: { url: string; alt: string }) => !!img.url);
 }
 
 export function normalizeProduct(p: any): Product {
@@ -60,7 +58,7 @@ export function normalizeProduct(p: any): Product {
   const allColors = (p.variants ?? [])
     .map((v: any) => v.attributes?.color)
     .filter(Boolean) as string[];
-  const uniqueColors = [...new Set(allColors)];
+  const uniqueColors = Array.from(new Set(allColors));
 
   const categoryName =
     typeof p.category === "object" ? p.category?.name : p.category ?? "";

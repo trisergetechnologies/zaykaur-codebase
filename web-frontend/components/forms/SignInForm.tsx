@@ -111,7 +111,7 @@ const SignInForm = () => {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
-              <Link href="/forgot-password" size="sm" className="text-xs font-semibold text-pink-600 hover:text-pink-700">
+              <Link href="/forgot-password" className="text-xs font-semibold text-pink-600 hover:text-pink-700">
                 Forgot?
               </Link>
             </div>

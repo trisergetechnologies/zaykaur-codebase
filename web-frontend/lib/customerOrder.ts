@@ -119,7 +119,7 @@ function mapAddress(a: any): AddressView | undefined {
 export function mapCustomerOrderListItem(o: any): CustomerOrderListItem {
   const items = (o.items ?? []).map((item: any, i: number) => lineItemFromApi(item, i));
   const previewImages = items
-    .map((it) => it.image)
+    .map((it: OrderLineItemView) => it.image)
     .filter(Boolean)
     .slice(0, 4) as string[];
 
@@ -131,7 +131,10 @@ export function mapCustomerOrderListItem(o: any): CustomerOrderListItem {
     orderStatus: (o.orderStatus || o.status || "placed").toLowerCase(),
     paymentMethod: o.paymentMethod || "cod",
     paymentStatus: (o.paymentStatus || "pending").toLowerCase(),
-    itemCount: items.reduce((n, it) => n + it.quantity, 0),
+    itemCount: items.reduce(
+      (n: number, it: OrderLineItemView) => n + it.quantity,
+      0
+    ),
     previewImages,
     items,
   };

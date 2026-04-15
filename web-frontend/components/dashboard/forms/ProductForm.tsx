@@ -78,7 +78,9 @@ const ProductForm = () => {
     setVariants((prev) =>
       prev.map((v) => ({
         ...v,
-        attributes: Object.fromEntries(keys.map((k) => [k, v.attributes?.[k] ?? ""])),
+        attributes: Object.fromEntries(
+          keys.map((k: string) => [k, v.attributes?.[k] ?? ""])
+        ),
       }))
     );
   }, [form.category, categories]);
