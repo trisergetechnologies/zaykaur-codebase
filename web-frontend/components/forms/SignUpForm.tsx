@@ -1,6 +1,6 @@
 'use client';
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -30,13 +30,19 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 const SignUpForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { register: registerUser } = useAuthStore();
+  const { register: registerUser, isAuthenticated } = useAuthStore();
   const nextPath = searchParams.get("redirect") || searchParams.get("next");
   const safeNextPath =
     nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")
       ? nextPath
       : null;
   const accountType: "customer" = "customer";
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace(safeNextPath || "/");
+    }
+  }, [isAuthenticated, router, safeNextPath]);
 
   const {
     register,

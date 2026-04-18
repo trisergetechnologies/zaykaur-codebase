@@ -156,92 +156,331 @@ async function seedData() {
 
     // =====================================================================
     // 2. CATEGORIES  (root → sub → sub-sub where needed)
+    //    All 16 mega-menu top-level keys + every sub-item slug
     // =====================================================================
     const rootCats = await Category.insertMany([
-      { name: "Electronics",   slug: "electronics",   level: 0, displayOrder: 0, image: IMG(300, 300, "cat-elec") },
-      { name: "Fashion",       slug: "fashion",       level: 0, displayOrder: 1, image: IMG(300, 300, "cat-fash") },
-      { name: "Kids",          slug: "kids",          level: 0, displayOrder: 2, image: IMG(300, 300, "cat-kids") },
-      { name: "TV & Appliances", slug: "tv-appliances", level: 0, displayOrder: 3, image: IMG(300, 300, "cat-tva") },
-      { name: "Furniture",     slug: "furniture",     level: 0, displayOrder: 4, image: IMG(300, 300, "cat-furn") },
-      { name: "Beauty",        slug: "beauty",        level: 0, displayOrder: 5, image: IMG(300, 300, "cat-beau") },
-      { name: "Home & Kitchen", slug: "home-kitchen", level: 0, displayOrder: 6, image: IMG(300, 300, "cat-homk") },
+      { name: "Electronics",        slug: "electronics",        level: 0, displayOrder: 0,  image: IMG(300, 300, "cat-elec") },
+      { name: "Fashion",            slug: "fashion",            level: 0, displayOrder: 1,  image: IMG(300, 300, "cat-fash") },
+      { name: "Kids",               slug: "kids",               level: 0, displayOrder: 2,  image: IMG(300, 300, "cat-kids") },
+      { name: "TV & Appliances",    slug: "tv-appliances",      level: 0, displayOrder: 3,  image: IMG(300, 300, "cat-tva") },
+      { name: "Furniture",          slug: "furniture",          level: 0, displayOrder: 4,  image: IMG(300, 300, "cat-furn") },
+      { name: "Beauty",             slug: "beauty",             level: 0, displayOrder: 5,  image: IMG(300, 300, "cat-beau") },
+      { name: "Mobiles",            slug: "mobiles",            level: 0, displayOrder: 6,  image: IMG(300, 300, "cat-mob") },
+      { name: "Computers & Laptops",slug: "computers-laptops",  level: 0, displayOrder: 7,  image: IMG(300, 300, "cat-comp") },
+      { name: "Audio & Headphones", slug: "audio-headphones",   level: 0, displayOrder: 8,  image: IMG(300, 300, "cat-aud") },
+      { name: "Home & Kitchen",     slug: "home-kitchen",       level: 0, displayOrder: 9,  image: IMG(300, 300, "cat-homk") },
+      { name: "Sports & Fitness",   slug: "sports-fitness",     level: 0, displayOrder: 10, image: IMG(300, 300, "cat-sprt") },
+      { name: "Books",              slug: "books",              level: 0, displayOrder: 11, image: IMG(300, 300, "cat-book") },
+      { name: "Toys & Games",       slug: "toys-games",         level: 0, displayOrder: 12, image: IMG(300, 300, "cat-toys") },
+      { name: "Automotive",         slug: "automotive",         level: 0, displayOrder: 13, image: IMG(300, 300, "cat-auto") },
+      { name: "Grocery",            slug: "grocery",            level: 0, displayOrder: 14, image: IMG(300, 300, "cat-groc") },
+      { name: "Health Care",        slug: "health-care",        level: 0, displayOrder: 15, image: IMG(300, 300, "cat-hlth") },
     ]);
-    const [catElec, catFash, catKids, catTVA, catFurn, catBeauty, catHome] = rootCats;
+    const [
+      catElec, catFash, catKids, catTVA, catFurn, catBeauty,
+      catMob, catComp, catAud, catHome,
+      catSport, catBooks, catToys, catAuto, catGroc, catHealth,
+    ] = rootCats;
+
+    const sub = (name, slug, parent, extra = {}) => ({
+      name, slug, parent: parent._id, ancestors: [parent._id], level: 1, displayOrder: 0, image: IMG(300, 300, `sub-${slug.slice(0,6)}`), ...extra,
+    });
 
     const subCats = await Category.insertMany([
-      // Electronics subs
-      { name: "Laptops",           slug: "laptops",           parent: catElec._id, ancestors: [catElec._id], level: 1, displayOrder: 0, image: IMG(300, 300, "sub-lap"),
-        variantAttributeTemplates: [
-          { key: "ram", label: "RAM", suggestedOptions: ["8GB","16GB","32GB"], displayOrder: 0 },
-          { key: "storage", label: "Storage", suggestedOptions: ["256GB SSD","512GB SSD","1TB SSD"], displayOrder: 1 },
-        ] },
-      { name: "Mobiles",           slug: "mobiles",           parent: catElec._id, ancestors: [catElec._id], level: 1, displayOrder: 1, image: IMG(300, 300, "sub-mob"),
+      // ── Electronics (mega-menu columns: Mobiles & Tablets, Computers, Audio, Cameras) ──
+      { ...sub("Smartphones",         "smartphones",          catElec), displayOrder: 0,
         variantAttributeTemplates: [
           { key: "ram", label: "RAM", suggestedOptions: ["4GB","6GB","8GB","12GB"], displayOrder: 0 },
           { key: "storage", label: "Storage", suggestedOptions: ["64GB","128GB","256GB"], displayOrder: 1 },
           { key: "color", label: "Color", suggestedOptions: ["Black","Blue","Green","White"], displayOrder: 2 },
         ] },
-      { name: "Audio & Headphones", slug: "audio-headphones", parent: catElec._id, ancestors: [catElec._id], level: 1, displayOrder: 2, image: IMG(300, 300, "sub-aud") },
-      { name: "Computers & Laptops", slug: "computers-laptops", parent: catElec._id, ancestors: [catElec._id], level: 1, displayOrder: 3, image: IMG(300, 300, "sub-comp") },
+      { ...sub("Tablets",             "tablets",              catElec), displayOrder: 1 },
+      { ...sub("Feature Phones",      "feature-phones",       catElec), displayOrder: 2 },
+      { ...sub("Mobile Accessories",  "mobile-accessories",   catElec), displayOrder: 3 },
+      { ...sub("Power Banks",         "power-banks",          catElec), displayOrder: 4 },
+      { ...sub("Laptops",             "laptops",              catElec), displayOrder: 5,
+        variantAttributeTemplates: [
+          { key: "ram", label: "RAM", suggestedOptions: ["8GB","16GB","32GB"], displayOrder: 0 },
+          { key: "storage", label: "Storage", suggestedOptions: ["256GB SSD","512GB SSD","1TB SSD"], displayOrder: 1 },
+        ] },
+      { ...sub("Desktops",            "desktops",             catElec), displayOrder: 6 },
+      { ...sub("Monitors",            "monitors",             catElec), displayOrder: 7 },
+      { ...sub("Computer Accessories","computer-accessories",  catElec), displayOrder: 8 },
+      { ...sub("Storage Devices",     "storage-devices",      catElec), displayOrder: 9 },
+      { ...sub("Headphones",          "headphones",           catElec), displayOrder: 10 },
+      { ...sub("Earbuds",             "earbuds",              catElec), displayOrder: 11 },
+      { ...sub("Bluetooth Speakers",  "bluetooth-speakers",   catElec), displayOrder: 12 },
+      { ...sub("Soundbars",           "soundbars",            catElec), displayOrder: 13 },
+      { ...sub("Home Audio Systems",  "home-audio-systems",   catElec), displayOrder: 14 },
+      { ...sub("DSLR Cameras",        "dslr-cameras",         catElec), displayOrder: 15 },
+      { ...sub("Mirrorless Cameras",  "mirrorless-cameras",   catElec), displayOrder: 16 },
+      { ...sub("Action Cameras",      "action-cameras",       catElec), displayOrder: 17 },
+      { ...sub("Camera Lenses",       "camera-lenses",        catElec), displayOrder: 18 },
 
-      // Fashion subs
-      { name: "Sarees",   slug: "sarees",   parent: catFash._id, ancestors: [catFash._id], level: 1, displayOrder: 0, image: IMG(300, 300, "sub-sar"),
-        variantAttributeTemplates: [
-          { key: "size", label: "Size", suggestedOptions: ["5.5m","6m","6.5m"], displayOrder: 0 },
-          { key: "color", label: "Color", suggestedOptions: ["Red","Blue","Green","Gold","Pink"], displayOrder: 1 },
-        ] },
-      { name: "Kurtis",   slug: "kurtis",   parent: catFash._id, ancestors: [catFash._id], level: 1, displayOrder: 1, image: IMG(300, 300, "sub-kur"),
-        variantAttributeTemplates: [
-          { key: "size", label: "Size", suggestedOptions: ["S","M","L","XL"], displayOrder: 0 },
-          { key: "color", label: "Color", suggestedOptions: ["Red","Blue","White","Maroon"], displayOrder: 1 },
-        ] },
-      { name: "Lehenga",  slug: "lehenga",  parent: catFash._id, ancestors: [catFash._id], level: 1, displayOrder: 2, image: IMG(300, 300, "sub-leh") },
-      { name: "Kurtas",   slug: "kurtas",   parent: catFash._id, ancestors: [catFash._id], level: 1, displayOrder: 3, image: IMG(300, 300, "sub-kta"),
-        variantAttributeTemplates: [
-          { key: "size", label: "Size", suggestedOptions: ["S","M","L","XL"], displayOrder: 0 },
-          { key: "color", label: "Color", suggestedOptions: ["White","Beige","Navy","Black"], displayOrder: 1 },
-        ] },
-      { name: "T-Shirts", slug: "t-shirts", parent: catFash._id, ancestors: [catFash._id], level: 1, displayOrder: 4, image: IMG(300, 300, "sub-tsh"),
+      // ── Fashion (Men, Women, Footwear, Accessories) ──
+      { ...sub("T-Shirts",      "t-shirts",      catFash), displayOrder: 0,
         variantAttributeTemplates: [
           { key: "size", label: "Size", suggestedOptions: ["S","M","L","XL"], displayOrder: 0 },
           { key: "color", label: "Color", suggestedOptions: ["Black","White","Blue","Grey"], displayOrder: 1 },
         ] },
-      { name: "Jeans",    slug: "jeans",     parent: catFash._id, ancestors: [catFash._id], level: 1, displayOrder: 5, image: IMG(300, 300, "sub-jns") },
-      { name: "Shirts",   slug: "shirts",    parent: catFash._id, ancestors: [catFash._id], level: 1, displayOrder: 6, image: IMG(300, 300, "sub-shr") },
+      { ...sub("Casual Shirts", "casual-shirts", catFash), displayOrder: 1 },
+      { ...sub("Jeans",         "jeans",         catFash), displayOrder: 2 },
+      { ...sub("Formal Shirts", "formal-shirts", catFash), displayOrder: 3 },
+      { ...sub("Jackets",       "jackets",       catFash), displayOrder: 4 },
+      { ...sub("Sarees",        "sarees",        catFash), displayOrder: 5,
+        variantAttributeTemplates: [
+          { key: "size", label: "Size", suggestedOptions: ["5.5m","6m","6.5m"], displayOrder: 0 },
+          { key: "color", label: "Color", suggestedOptions: ["Red","Blue","Green","Gold","Pink"], displayOrder: 1 },
+        ] },
+      { ...sub("Kurtis",        "kurtis",        catFash), displayOrder: 6,
+        variantAttributeTemplates: [
+          { key: "size", label: "Size", suggestedOptions: ["S","M","L","XL"], displayOrder: 0 },
+          { key: "color", label: "Color", suggestedOptions: ["Red","Blue","White","Maroon"], displayOrder: 1 },
+        ] },
+      { ...sub("Dresses",       "dresses",       catFash), displayOrder: 7 },
+      { ...sub("Tops",          "tops",          catFash), displayOrder: 8 },
+      { ...sub("Lehengas",      "lehengas",      catFash), displayOrder: 9 },
+      { ...sub("Casual Shoes",  "casual-shoes",  catFash), displayOrder: 10 },
+      { ...sub("Sneakers",      "sneakers",      catFash), displayOrder: 11 },
+      { ...sub("Sports Shoes",  "sports-shoes",  catFash), displayOrder: 12 },
+      { ...sub("Sandals",       "sandals",       catFash), displayOrder: 13 },
+      { ...sub("Heels",         "heels",         catFash), displayOrder: 14 },
+      { ...sub("Watches",       "watches",       catFash), displayOrder: 15 },
+      { ...sub("Handbags",      "handbags",      catFash), displayOrder: 16 },
+      { ...sub("Belts",         "belts",         catFash), displayOrder: 17 },
+      { ...sub("Sunglasses",    "sunglasses",    catFash), displayOrder: 18 },
+      { ...sub("Wallets",       "wallets",       catFash), displayOrder: 19 },
+      { ...sub("Shirts",        "shirts",        catFash), displayOrder: 20 },
+      { ...sub("Kurtas",        "kurtas",        catFash), displayOrder: 21,
+        variantAttributeTemplates: [
+          { key: "size", label: "Size", suggestedOptions: ["S","M","L","XL"], displayOrder: 0 },
+          { key: "color", label: "Color", suggestedOptions: ["White","Beige","Navy","Black"], displayOrder: 1 },
+        ] },
+      { ...sub("Lehenga",       "lehenga",       catFash), displayOrder: 22 },
 
-      // Kids subs
-      { name: "Kids Clothing", slug: "kids-clothing", parent: catKids._id, ancestors: [catKids._id], level: 1, displayOrder: 0, image: IMG(300, 300, "sub-kcl") },
-      { name: "Kids Toys",     slug: "kids-toys",     parent: catKids._id, ancestors: [catKids._id], level: 1, displayOrder: 1, image: IMG(300, 300, "sub-kty") },
-      { name: "Kids Shoes",    slug: "kids-shoes",    parent: catKids._id, ancestors: [catKids._id], level: 1, displayOrder: 2, image: IMG(300, 300, "sub-ksh") },
+      // ── Kids (Boys Clothing, Girls Clothing, Baby Care) ──
+      { ...sub("Kids T-Shirts",     "kids-t-shirts",     catKids), displayOrder: 0 },
+      { ...sub("Kids Shirts",       "kids-shirts",       catKids), displayOrder: 1 },
+      { ...sub("Kids Jeans",        "kids-jeans",        catKids), displayOrder: 2 },
+      { ...sub("Kids Shorts",       "kids-shorts",       catKids), displayOrder: 3 },
+      { ...sub("Kids Jackets",      "kids-jackets",      catKids), displayOrder: 4 },
+      { ...sub("Kids Dresses",      "kids-dresses",      catKids), displayOrder: 5 },
+      { ...sub("Kids Tops",         "kids-tops",         catKids), displayOrder: 6 },
+      { ...sub("Kids Skirts",       "kids-skirts",       catKids), displayOrder: 7 },
+      { ...sub("Leggings",          "leggings",          catKids), displayOrder: 8 },
+      { ...sub("Baby Clothing",     "baby-clothing",     catKids), displayOrder: 9 },
+      { ...sub("Diapers",           "diapers",           catKids), displayOrder: 10 },
+      { ...sub("Baby Toys",         "baby-toys",         catKids), displayOrder: 11 },
+      { ...sub("Feeding Products",  "feeding-products",  catKids), displayOrder: 12 },
+      { ...sub("Kids Clothing",     "kids-clothing",     catKids), displayOrder: 13 },
+      { ...sub("Kids Toys",         "kids-toys",         catKids), displayOrder: 14 },
+      { ...sub("Kids Shoes",        "kids-shoes",        catKids), displayOrder: 15 },
 
-      // TV & Appliances subs
-      { name: "Televisions",      slug: "televisions",      parent: catTVA._id, ancestors: [catTVA._id], level: 1, displayOrder: 0, image: IMG(300, 300, "sub-tv") },
-      { name: "Home Appliances",  slug: "home-appliances",  parent: catTVA._id, ancestors: [catTVA._id], level: 1, displayOrder: 1, image: IMG(300, 300, "sub-hap") },
+      // ── TV & Appliances (Televisions, Home Appliances, Kitchen Appliances) ──
+      { ...sub("Smart TVs",         "smart-tvs",         catTVA), displayOrder: 0 },
+      { ...sub("LED TVs",           "led-tvs",           catTVA), displayOrder: 1 },
+      { ...sub("Android TVs",       "android-tvs",       catTVA), displayOrder: 2 },
+      { ...sub("4K TVs",            "4k-tvs",            catTVA), displayOrder: 3 },
+      { ...sub("Refrigerators",     "refrigerators",     catTVA), displayOrder: 4 },
+      { ...sub("Washing Machines",  "washing-machines",   catTVA), displayOrder: 5 },
+      { ...sub("Air Conditioners",  "air-conditioners",   catTVA), displayOrder: 6 },
+      { ...sub("Water Purifiers",   "water-purifiers",    catTVA), displayOrder: 7 },
+      { ...sub("Microwave Ovens",   "microwave-ovens",    catTVA), displayOrder: 8 },
+      { ...sub("Mixer Grinders",    "mixer-grinders",     catTVA), displayOrder: 9 },
+      { ...sub("Electric Kettles",  "electric-kettles",   catTVA), displayOrder: 10 },
+      { ...sub("Induction Cooktops","induction-cooktops", catTVA), displayOrder: 11 },
+      { ...sub("Televisions",       "televisions",        catTVA), displayOrder: 12 },
+      { ...sub("Home Appliances",   "home-appliances",    catTVA), displayOrder: 13 },
 
-      // Furniture subs
-      { name: "Sofas",       slug: "sofas",       parent: catFurn._id, ancestors: [catFurn._id], level: 1, displayOrder: 0, image: IMG(300, 300, "sub-sof") },
-      { name: "Beds",        slug: "beds",        parent: catFurn._id, ancestors: [catFurn._id], level: 1, displayOrder: 1, image: IMG(300, 300, "sub-bed") },
-      { name: "Tables",      slug: "tables",      parent: catFurn._id, ancestors: [catFurn._id], level: 1, displayOrder: 2, image: IMG(300, 300, "sub-tbl") },
-      { name: "Chairs",      slug: "chairs",      parent: catFurn._id, ancestors: [catFurn._id], level: 1, displayOrder: 3, image: IMG(300, 300, "sub-chr") },
+      // ── Furniture (Living Room, Bedroom, Office Furniture) ──
+      { ...sub("Sofas",           "sofas",           catFurn), displayOrder: 0 },
+      { ...sub("Coffee Tables",   "coffee-tables",   catFurn), displayOrder: 1 },
+      { ...sub("TV Units",        "tv-units",        catFurn), displayOrder: 2 },
+      { ...sub("Recliners",       "recliners",       catFurn), displayOrder: 3 },
+      { ...sub("Beds",            "beds",            catFurn), displayOrder: 4 },
+      { ...sub("Wardrobes",       "wardrobes",       catFurn), displayOrder: 5 },
+      { ...sub("Mattresses",      "mattresses",      catFurn), displayOrder: 6 },
+      { ...sub("Bedside Tables",  "bedside-tables",  catFurn), displayOrder: 7 },
+      { ...sub("Office Chairs",   "office-chairs",   catFurn), displayOrder: 8 },
+      { ...sub("Study Tables",    "study-tables",    catFurn), displayOrder: 9 },
+      { ...sub("Book Shelves",    "book-shelves",    catFurn), displayOrder: 10 },
+      { ...sub("Tables",          "tables",          catFurn), displayOrder: 11 },
+      { ...sub("Chairs",          "chairs",          catFurn), displayOrder: 12 },
 
-      // Beauty subs
-      { name: "Skincare",    slug: "skincare",    parent: catBeauty._id, ancestors: [catBeauty._id], level: 1, displayOrder: 0, image: IMG(300, 300, "sub-skn") },
-      { name: "Makeup",      slug: "makeup",      parent: catBeauty._id, ancestors: [catBeauty._id], level: 1, displayOrder: 1, image: IMG(300, 300, "sub-mkp") },
+      // ── Beauty (Makeup, Skincare, Hair Care) ──
+      { ...sub("Lipsticks",          "lipsticks",          catBeauty), displayOrder: 0 },
+      { ...sub("Foundations",         "foundations",         catBeauty), displayOrder: 1 },
+      { ...sub("Compact Powder",     "compact-powder",      catBeauty), displayOrder: 2 },
+      { ...sub("Eyeshadow",          "eyeshadow",           catBeauty), displayOrder: 3 },
+      { ...sub("Face Wash",          "face-wash",           catBeauty), displayOrder: 4 },
+      { ...sub("Moisturizers",       "moisturizers",        catBeauty), displayOrder: 5 },
+      { ...sub("Serums",             "serums",              catBeauty), displayOrder: 6 },
+      { ...sub("Sunscreens",         "sunscreens",          catBeauty), displayOrder: 7 },
+      { ...sub("Shampoo",            "shampoo",             catBeauty), displayOrder: 8 },
+      { ...sub("Hair Oil",           "hair-oil",            catBeauty), displayOrder: 9 },
+      { ...sub("Conditioners",       "conditioners",        catBeauty), displayOrder: 10 },
+      { ...sub("Hair Styling Tools", "hair-styling-tools",  catBeauty), displayOrder: 11 },
+      { ...sub("Skincare",           "skincare",            catBeauty), displayOrder: 12 },
+      { ...sub("Makeup",             "makeup",              catBeauty), displayOrder: 13 },
 
-      // Home & Kitchen subs
-      { name: "Kitchen Appliances", slug: "kitchen-appliances", parent: catHome._id, ancestors: [catHome._id], level: 1, displayOrder: 0, image: IMG(300, 300, "sub-kap") },
+      // ── Mobiles (Smartphones, Accessories) ──
+      { ...sub("Android Phones",     "android-phones",      catMob), displayOrder: 0 },
+      { ...sub("5G Phones",          "5g-phones",           catMob), displayOrder: 1 },
+      { ...sub("Gaming Phones",      "gaming-phones",       catMob), displayOrder: 2 },
+      { ...sub("Mobile Cases",       "mobile-cases",        catMob), displayOrder: 3 },
+      { ...sub("Screen Protectors",  "screen-protectors",   catMob), displayOrder: 4 },
+      { ...sub("Chargers",           "chargers",            catMob), displayOrder: 5 },
+      { ...sub("Mobile Power Banks", "mobile-power-banks",  catMob), displayOrder: 6 },
+
+      // ── Computers & Laptops (Laptops, Components, Accessories) ──
+      { ...sub("Gaming Laptops",     "gaming-laptops",      catComp), displayOrder: 0 },
+      { ...sub("Business Laptops",   "business-laptops",    catComp), displayOrder: 1 },
+      { ...sub("Student Laptops",    "student-laptops",     catComp), displayOrder: 2 },
+      { ...sub("Processors",         "processors",          catComp), displayOrder: 3 },
+      { ...sub("Graphics Cards",     "graphics-cards",      catComp), displayOrder: 4 },
+      { ...sub("RAM",                "ram",                 catComp), displayOrder: 5 },
+      { ...sub("SSDs",               "ssds",                catComp), displayOrder: 6 },
+      { ...sub("Keyboards",          "keyboards",           catComp), displayOrder: 7 },
+      { ...sub("Mouse",              "mouse",               catComp), displayOrder: 8 },
+      { ...sub("Laptop Bags",        "laptop-bags",         catComp), displayOrder: 9 },
+
+      // ── Audio & Headphones (Headphones, Earbuds, Speakers)
+      //    Items like "Bluetooth Speakers" / "Soundbars" share slugs with Electronics subs
+      { ...sub("Over-Ear Headphones",       "over-ear-headphones",       catAud), displayOrder: 0 },
+      { ...sub("On-Ear Headphones",         "on-ear-headphones",         catAud), displayOrder: 1 },
+      { ...sub("Noise Cancelling Headphones","noise-cancelling-headphones",catAud), displayOrder: 2 },
+      { ...sub("True Wireless Earbuds",     "true-wireless-earbuds",     catAud), displayOrder: 3 },
+      { ...sub("Sports Earbuds",            "sports-earbuds",            catAud), displayOrder: 4 },
+      { ...sub("Party Speakers",            "party-speakers",            catAud), displayOrder: 5 },
+
+      // ── Home & Kitchen (Kitchen Appliances, Cookware & Dining, Home Decor, Home Furnishing)
+      //    Shared slug items (mixer-grinders, microwave-ovens, etc.) already exist under TV & Appliances
+      { ...sub("Cookware Sets",         "cookware-sets",          catHome), displayOrder: 4 },
+      { ...sub("Pressure Cookers",      "pressure-cookers",       catHome), displayOrder: 5 },
+      { ...sub("Dinner Sets",           "dinner-sets",            catHome), displayOrder: 6 },
+      { ...sub("Kitchen Tools",         "kitchen-tools",          catHome), displayOrder: 7 },
+      { ...sub("Wall Decor",            "wall-decor",             catHome), displayOrder: 8 },
+      { ...sub("Clocks",                "clocks",                 catHome), displayOrder: 9 },
+      { ...sub("Photo Frames",          "photo-frames",           catHome), displayOrder: 10 },
+      { ...sub("Artificial Plants",     "artificial-plants",      catHome), displayOrder: 11 },
+      { ...sub("Bedsheets",             "bedsheets",              catHome), displayOrder: 12 },
+      { ...sub("Curtains",              "curtains",               catHome), displayOrder: 13 },
+      { ...sub("Cushion Covers",        "cushion-covers",         catHome), displayOrder: 14 },
+      { ...sub("Carpets",               "carpets",                catHome), displayOrder: 15 },
+      { ...sub("Kitchen Appliances",    "kitchen-appliances",     catHome), displayOrder: 16 },
+
+      // ── Sports & Fitness (Fitness Equipment, Sports Gear, Yoga) ──
+      { ...sub("Dumbbells",             "dumbbells",              catSport), displayOrder: 0 },
+      { ...sub("Treadmills",            "treadmills",             catSport), displayOrder: 1 },
+      { ...sub("Exercise Bikes",        "exercise-bikes",         catSport), displayOrder: 2 },
+      { ...sub("Resistance Bands",      "resistance-bands",       catSport), displayOrder: 3 },
+      { ...sub("Cricket Bats",          "cricket-bats",           catSport), displayOrder: 4 },
+      { ...sub("Football",              "football",               catSport), displayOrder: 5 },
+      { ...sub("Badminton Rackets",     "badminton-rackets",      catSport), displayOrder: 6 },
+      { ...sub("Basketballs",           "basketballs",            catSport), displayOrder: 7 },
+      { ...sub("Yoga Mats",             "yoga-mats",              catSport), displayOrder: 8 },
+      { ...sub("Yoga Blocks",           "yoga-blocks",            catSport), displayOrder: 9 },
+      { ...sub("Yoga Accessories",      "yoga-accessories",       catSport), displayOrder: 10 },
+
+      // ── Books (Popular Categories, Academic) ──
+      { ...sub("Fiction",                "fiction",                catBooks), displayOrder: 0 },
+      { ...sub("Non-Fiction",            "non-fiction",            catBooks), displayOrder: 1 },
+      { ...sub("Educational Books",      "educational-books",      catBooks), displayOrder: 2 },
+      { ...sub("Children Books",         "children-books",         catBooks), displayOrder: 3 },
+      { ...sub("School Books",           "school-books",           catBooks), displayOrder: 4 },
+      { ...sub("Competitive Exam Books", "competitive-exam-books", catBooks), displayOrder: 5 },
+      { ...sub("Engineering Books",      "engineering-books",      catBooks), displayOrder: 6 },
+      { ...sub("Medical Books",          "medical-books",          catBooks), displayOrder: 7 },
+
+      // ── Toys & Games (Kids Toys, Board Games) ──
+      { ...sub("Educational Toys",       "educational-toys",       catToys), displayOrder: 0 },
+      { ...sub("Soft Toys",              "soft-toys",              catToys), displayOrder: 1 },
+      { ...sub("Remote Control Toys",    "remote-control-toys",    catToys), displayOrder: 2 },
+      { ...sub("Building Blocks",        "building-blocks",        catToys), displayOrder: 3 },
+      { ...sub("Chess",                  "chess",                  catToys), displayOrder: 4 },
+      { ...sub("Ludo",                   "ludo",                   catToys), displayOrder: 5 },
+      { ...sub("Carrom",                 "carrom",                 catToys), displayOrder: 6 },
+      { ...sub("Puzzle Games",           "puzzle-games",           catToys), displayOrder: 7 },
+
+      // ── Automotive (Car Accessories, Bike Accessories) ──
+      { ...sub("Car Covers",             "car-covers",             catAuto), displayOrder: 0 },
+      { ...sub("Seat Covers",            "seat-covers",            catAuto), displayOrder: 1 },
+      { ...sub("Car Chargers",           "car-chargers",           catAuto), displayOrder: 2 },
+      { ...sub("Car Perfumes",           "car-perfumes",           catAuto), displayOrder: 3 },
+      { ...sub("Helmets",                "helmets",                catAuto), displayOrder: 4 },
+      { ...sub("Bike Covers",            "bike-covers",            catAuto), displayOrder: 5 },
+      { ...sub("Gloves",                 "gloves",                 catAuto), displayOrder: 6 },
+      { ...sub("Riding Gear",            "riding-gear",            catAuto), displayOrder: 7 },
+
+      // ── Grocery (Food Staples, Packaged Foods, Beverages) ──
+      { ...sub("Rice",                   "rice",                   catGroc), displayOrder: 0 },
+      { ...sub("Flour",                  "flour",                  catGroc), displayOrder: 1 },
+      { ...sub("Pulses",                 "pulses",                 catGroc), displayOrder: 2 },
+      { ...sub("Cooking Oil",            "cooking-oil",            catGroc), displayOrder: 3 },
+      { ...sub("Snacks",                 "snacks",                 catGroc), displayOrder: 4 },
+      { ...sub("Biscuits",               "biscuits",               catGroc), displayOrder: 5 },
+      { ...sub("Instant Foods",          "instant-foods",          catGroc), displayOrder: 6 },
+      { ...sub("Breakfast Cereals",      "breakfast-cereals",      catGroc), displayOrder: 7 },
+      { ...sub("Tea",                    "tea",                    catGroc), displayOrder: 8 },
+      { ...sub("Coffee",                 "coffee",                 catGroc), displayOrder: 9 },
+      { ...sub("Soft Drinks",            "soft-drinks",            catGroc), displayOrder: 10 },
+      { ...sub("Energy Drinks",          "energy-drinks",          catGroc), displayOrder: 11 },
+
+      // ── Health Care (Health Essentials, Personal Care) ──
+      { ...sub("Vitamins & Supplements", "vitamins-and-supplements",catHealth), displayOrder: 0 },
+      { ...sub("First Aid Kits",         "first-aid-kits",         catHealth), displayOrder: 1 },
+      { ...sub("Health Devices",         "health-devices",         catHealth), displayOrder: 2 },
+      { ...sub("Sanitizers",             "sanitizers",             catHealth), displayOrder: 3 },
+      { ...sub("Masks",                  "masks",                  catHealth), displayOrder: 4 },
+      { ...sub("Thermometers",           "thermometers",           catHealth), displayOrder: 5 },
+      { ...sub("Blood Pressure Monitors","blood-pressure-monitors",catHealth), displayOrder: 6 },
     ]);
 
-    // Convenient aliases
-    const [
-      laptops, mobiles, audio, compLaptops,
-      sarees, kurtis, lehenga, kurtas, tshirts, jeans, shirts,
-      kidClothing, kidToys, kidShoes,
-      tvs, homeAppl,
-      sofas, beds, tables, chairs,
-      skincare, makeup,
-      kitchenAppl,
-    ] = subCats;
+    // Build a quick look-up by slug
+    const SC = {};
+    subCats.forEach((c) => { SC[c.slug] = c; });
+
+    // Convenient aliases for product seeding
+    const laptops       = SC["laptops"];
+    const smartphones   = SC["smartphones"];
+    const headphones    = SC["headphones"];
+    const sarees        = SC["sarees"];
+    const kurtis        = SC["kurtis"];
+    const lehengas      = SC["lehengas"];
+    const kurtas        = SC["kurtas"];
+    const tshirts       = SC["t-shirts"];
+    const jeans         = SC["jeans"];
+    const shirts        = SC["shirts"];
+    const kidClothing   = SC["kids-clothing"];
+    const kidToys       = SC["kids-toys"];
+    const smartTvs      = SC["smart-tvs"];
+    const homeAppl      = SC["home-appliances"];
+    const mixerGrinders = SC["mixer-grinders"];
+    const sofas         = SC["sofas"];
+    const beds          = SC["beds"];
+    const tables        = SC["tables"] || SC["study-tables"];
+    const chairs        = SC["chairs"] || SC["office-chairs"];
+    const skincare      = SC["skincare"] || SC["serums"];
+    const kitchenAppl   = SC["kitchen-appliances"];
+    const dumbbells     = SC["dumbbells"];
+    const yogaMats      = SC["yoga-mats"];
+    const cricketBats   = SC["cricket-bats"];
+    const fiction       = SC["fiction"];
+    const childrenBooks = SC["children-books"];
+    const eduToys       = SC["educational-toys"];
+    const chess         = SC["chess"];
+    const carCovers     = SC["car-covers"];
+    const helmets       = SC["helmets"];
+    const rice          = SC["rice"];
+    const tea           = SC["tea"];
+    const vitamins      = SC["vitamins-and-supplements"];
+    const sanitizers    = SC["sanitizers"];
+    const gamingLaptops = SC["gaming-laptops"];
+    const overEarHP     = SC["over-ear-headphones"];
+    const trueWireless  = SC["true-wireless-earbuds"];
+    const partySpeakers = SC["party-speakers"];
+    const cookwareSets  = SC["cookware-sets"];
+    const bedsheets     = SC["bedsheets"];
 
     console.log("  Categories seeded (" + (rootCats.length + subCats.length) + ")");
 
@@ -292,7 +531,7 @@ async function seedData() {
     console.log("  Delivery providers seeded (3)");
 
     // =====================================================================
-    // 6. PRODUCTS  (30 products across all categories)
+    // 6. PRODUCTS  (50+ products across all categories)
     // =====================================================================
     const productData = [
       // ---------- ELECTRONICS: Laptops ----------
@@ -300,7 +539,7 @@ async function seedData() {
         name: "ProBook 15 Laptop",
         slug: "probook-15-laptop",
         description: "15.6 inch laptop with Intel i5, ideal for work and study. Multiple RAM and storage options.",
-        category: laptops._id, categories: [laptops._id, catElec._id, compLaptops._id],
+        category: laptops._id, categories: [laptops._id, catElec._id, catComp._id],
         seller: seller3._id, status: "active", brand: "TechMart",
         attributes: { type: "Laptop", processor: "Intel i5" }, taxCode: "GST_18",
         variantAttributeDefs: [
@@ -318,7 +557,7 @@ async function seedData() {
         name: "Dell Gaming Laptop G15",
         slug: "dell-gaming-laptop-g15",
         description: "High-performance gaming laptop with RTX 4060 and 144Hz display.",
-        category: laptops._id, categories: [laptops._id, catElec._id],
+        category: laptops._id, categories: [laptops._id, catElec._id, gamingLaptops._id],
         seller: seller3._id, status: "active", brand: "Dell",
         attributes: { type: "Laptop", processor: "Intel i7", gpu: "RTX 4060" }, taxCode: "GST_18",
         variantAttributeDefs: [
@@ -331,12 +570,12 @@ async function seedData() {
         ],
       },
 
-      // ---------- ELECTRONICS: Mobiles ----------
+      // ---------- ELECTRONICS: Smartphones ----------
       {
         name: "SmartPhone X Pro",
         slug: "smartphone-x-pro",
         description: "6.5 inch AMOLED display, 5000mAh battery, 108MP camera.",
-        category: mobiles._id, categories: [mobiles._id, catElec._id],
+        category: smartphones._id, categories: [smartphones._id, catElec._id, catMob._id],
         seller: seller3._id, status: "active", brand: "TechMart",
         attributes: { type: "Smartphone", display: "6.5 inch AMOLED" }, taxCode: "GST_18",
         variantAttributeDefs: [
@@ -355,7 +594,7 @@ async function seedData() {
         name: "Apple iPhone 16",
         slug: "apple-iphone-16",
         description: "Latest Apple iPhone with A18 chip, ProMotion display, and advanced camera system.",
-        category: mobiles._id, categories: [mobiles._id, catElec._id],
+        category: smartphones._id, categories: [smartphones._id, catElec._id, catMob._id],
         seller: seller3._id, status: "active", brand: "Apple",
         attributes: { type: "Smartphone", display: "6.7 inch Super Retina" }, taxCode: "GST_18",
         variantAttributeDefs: [
@@ -374,7 +613,7 @@ async function seedData() {
         name: "Sony WH-1000XM5 Headphones",
         slug: "sony-wh-1000xm5",
         description: "Industry-leading noise cancellation with exceptional sound quality.",
-        category: audio._id, categories: [audio._id, catElec._id],
+        category: headphones._id, categories: [headphones._id, catElec._id, catAud._id, overEarHP._id],
         seller: seller3._id, status: "active", brand: "Sony",
         attributes: { type: "Headphones", connectivity: "Bluetooth 5.3" }, taxCode: "GST_18",
         variantAttributeDefs: [{ key: "color", label: "Color", options: ["Black","Silver"], displayOrder: 0 }],
@@ -394,6 +633,19 @@ async function seedData() {
         variants: [
           { sku: "AW9-SL", attributes: { color: "Silver" }, price: 34999, mrp: 41999, stock: 12, images: [{ url: IMG(600,600,"aw1"), alt: "Watch Silver" }], isActive: true },
           { sku: "AW9-BK", attributes: { color: "Black" },  price: 34999, mrp: 41999, stock: 10, images: [{ url: IMG(600,600,"aw2"), alt: "Watch Black" }], isActive: true },
+        ],
+      },
+      {
+        name: "boAt Airdopes 141 TWS Earbuds",
+        slug: "boat-airdopes-141",
+        description: "True wireless earbuds with 42H playback, ENx noise cancellation, and low-latency mode.",
+        category: trueWireless._id, categories: [trueWireless._id, catAud._id, catElec._id],
+        seller: seller3._id, status: "active", brand: "boAt",
+        attributes: { type: "TWS Earbuds", connectivity: "Bluetooth 5.1" }, taxCode: "GST_18",
+        variantAttributeDefs: [{ key: "color", label: "Color", options: ["Black","Blue","White"], displayOrder: 0 }],
+        variants: [
+          { sku: "BA141-BK", attributes: { color: "Black" }, price: 1299, mrp: 2999, stock: 50, images: [{ url: IMG(600,600,"ba1"), alt: "Earbuds Black" }], isActive: true },
+          { sku: "BA141-BL", attributes: { color: "Blue" },  price: 1299, mrp: 2999, stock: 40, images: [{ url: IMG(600,600,"ba2"), alt: "Earbuds Blue" }], isActive: true },
         ],
       },
 
@@ -471,7 +723,7 @@ async function seedData() {
         name: "Designer Lehenga Choli Set",
         slug: "designer-lehenga-choli-set",
         description: "Beautiful lehenga choli with dupatta. Ready to wear for weddings.",
-        category: lehenga._id, categories: [lehenga._id, catFash._id],
+        category: lehengas._id, categories: [lehengas._id, catFash._id],
         seller: seller2._id, status: "active", brand: "Rajasthan Silks",
         attributes: { fabric: "Net", occasion: "Wedding" }, taxCode: "GST_12",
         variantAttributeDefs: [
@@ -591,7 +843,7 @@ async function seedData() {
         name: "Samsung 55\" 4K Smart TV",
         slug: "samsung-55-4k-smart-tv",
         description: "Crystal UHD 4K Smart TV with Tizen OS and HDR10+ support.",
-        category: tvs._id, categories: [tvs._id, catTVA._id],
+        category: smartTvs._id, categories: [smartTvs._id, catTVA._id],
         seller: seller3._id, status: "active", brand: "Samsung",
         attributes: { type: "Smart TV", resolution: "4K UHD" }, taxCode: "GST_28",
         variantAttributeDefs: [],
@@ -603,7 +855,7 @@ async function seedData() {
         name: "Philips 750W Mixer Grinder",
         slug: "philips-750w-mixer-grinder",
         description: "Powerful mixer grinder with 3 stainless steel jars for everyday kitchen needs.",
-        category: homeAppl._id, categories: [homeAppl._id, catTVA._id],
+        category: mixerGrinders._id, categories: [mixerGrinders._id, homeAppl._id, catTVA._id],
         seller: seller2._id, status: "active", brand: "Philips",
         attributes: { type: "Mixer Grinder", power: "750W" }, taxCode: "GST_18",
         variantAttributeDefs: [{ key: "color", label: "Color", options: ["Black","White"], displayOrder: 0 }],
@@ -697,6 +949,203 @@ async function seedData() {
         variants: [
           { sku: "HRH-WH", attributes: { color: "White" }, price: 2499, mrp: 2999, stock: 20, images: [{ url: IMG(600,600,"hrh1"), alt: "Heater White" }], isActive: true },
           { sku: "HRH-GR", attributes: { color: "Grey" },  price: 2499, mrp: 2999, stock: 15, images: [{ url: IMG(600,600,"hrh2"), alt: "Heater Grey" }], isActive: true },
+        ],
+      },
+      {
+        name: "Premium Stainless Steel Cookware Set",
+        slug: "premium-stainless-steel-cookware-set",
+        description: "5-piece stainless steel cookware set with induction base. Dishwasher safe.",
+        category: cookwareSets._id, categories: [cookwareSets._id, catHome._id],
+        seller: seller2._id, status: "active", brand: "Prestige",
+        attributes: { material: "Stainless Steel", pieces: "5" }, taxCode: "GST_18",
+        variantAttributeDefs: [],
+        variants: [
+          { sku: "PSSC-5", attributes: {}, price: 3499, mrp: 4999, stock: 20, images: [{ url: IMG(600,600,"pssc1"), alt: "Cookware Set" }], isActive: true },
+        ],
+      },
+      {
+        name: "Cotton Bedsheet Set (King Size)",
+        slug: "cotton-bedsheet-set-king",
+        description: "144 TC cotton bedsheet with 2 pillow covers. Fade-resistant prints.",
+        category: bedsheets._id, categories: [bedsheets._id, catHome._id],
+        seller: seller2._id, status: "active", brand: "Bombay Dyeing",
+        attributes: { material: "Cotton", size: "King" }, taxCode: "GST_5",
+        variantAttributeDefs: [{ key: "color", label: "Color", options: ["Blue Floral","Red Ethnic","Green Leaf"], displayOrder: 0 }],
+        variants: [
+          { sku: "CBS-BF", attributes: { color: "Blue Floral" },  price: 799, mrp: 1199, stock: 40, images: [{ url: IMG(600,600,"cbs1"), alt: "Bedsheet Blue" }], isActive: true },
+          { sku: "CBS-RE", attributes: { color: "Red Ethnic" },   price: 799, mrp: 1199, stock: 35, images: [{ url: IMG(600,600,"cbs2"), alt: "Bedsheet Red" }], isActive: true },
+          { sku: "CBS-GL", attributes: { color: "Green Leaf" },   price: 849, mrp: 1249, stock: 30, images: [{ url: IMG(600,600,"cbs3"), alt: "Bedsheet Green" }], isActive: true },
+        ],
+      },
+
+      // ---------- SPORTS & FITNESS ----------
+      {
+        name: "Hex Dumbbell Set 5kg Pair",
+        slug: "hex-dumbbell-set-5kg",
+        description: "Rubber-coated hex dumbbells, anti-roll design. Ideal for home workouts.",
+        category: dumbbells._id, categories: [dumbbells._id, catSport._id],
+        seller: seller2._id, status: "active", brand: "Boldfit",
+        attributes: { weight: "5kg pair" }, taxCode: "GST_18",
+        variantAttributeDefs: [],
+        variants: [
+          { sku: "HDS-5KG", attributes: {}, price: 1499, mrp: 1999, stock: 30, images: [{ url: IMG(600,600,"hds1"), alt: "Dumbbell Set" }], isActive: true },
+        ],
+      },
+      {
+        name: "Premium Yoga Mat 6mm",
+        slug: "premium-yoga-mat-6mm",
+        description: "Anti-slip TPE yoga mat with carry strap. Eco-friendly material.",
+        category: yogaMats._id, categories: [yogaMats._id, catSport._id],
+        seller: seller2._id, status: "active", brand: "Boldfit",
+        attributes: { material: "TPE", thickness: "6mm" }, taxCode: "GST_18",
+        variantAttributeDefs: [{ key: "color", label: "Color", options: ["Purple","Blue","Black"], displayOrder: 0 }],
+        variants: [
+          { sku: "PYM-PUR", attributes: { color: "Purple" }, price: 699, mrp: 999, stock: 50, images: [{ url: IMG(600,600,"pym1"), alt: "Yoga Mat Purple" }], isActive: true },
+          { sku: "PYM-BLU", attributes: { color: "Blue" },   price: 699, mrp: 999, stock: 40, images: [{ url: IMG(600,600,"pym2"), alt: "Yoga Mat Blue" }], isActive: true },
+        ],
+      },
+      {
+        name: "SG Kashmir Willow Cricket Bat",
+        slug: "sg-kashmir-willow-cricket-bat",
+        description: "Full-size Kashmir willow cricket bat with premium quality grip.",
+        category: cricketBats._id, categories: [cricketBats._id, catSport._id],
+        seller: seller2._id, status: "active", brand: "SG",
+        attributes: { material: "Kashmir Willow" }, taxCode: "GST_18",
+        variantAttributeDefs: [],
+        variants: [
+          { sku: "SGCB-KW", attributes: {}, price: 1999, mrp: 2999, stock: 15, images: [{ url: IMG(600,600,"sgcb1"), alt: "Cricket Bat" }], isActive: true },
+        ],
+      },
+
+      // ---------- BOOKS ----------
+      {
+        name: "The Alchemist - Paulo Coelho",
+        slug: "the-alchemist-paulo-coelho",
+        description: "A magical story of Santiago, a shepherd boy on a journey to find treasure.",
+        category: fiction._id, categories: [fiction._id, catBooks._id],
+        seller: seller1._id, status: "active", brand: "HarperCollins",
+        attributes: { author: "Paulo Coelho", pages: "208" }, taxCode: "GST_5",
+        variantAttributeDefs: [],
+        variants: [
+          { sku: "TAL-PB", attributes: {}, price: 249, mrp: 350, stock: 100, images: [{ url: IMG(400,600,"tal1"), alt: "The Alchemist" }], isActive: true },
+        ],
+      },
+      {
+        name: "Wonder: Illustrated Treasury",
+        slug: "wonder-illustrated-treasury",
+        description: "A beautifully illustrated children's book about kindness and acceptance.",
+        category: childrenBooks._id, categories: [childrenBooks._id, catBooks._id],
+        seller: seller1._id, status: "active", brand: "Penguin Random House",
+        attributes: { author: "R.J. Palacio", pages: "320" }, taxCode: "GST_5",
+        variantAttributeDefs: [],
+        variants: [
+          { sku: "WIT-HB", attributes: {}, price: 499, mrp: 699, stock: 40, images: [{ url: IMG(400,600,"wit1"), alt: "Wonder Book" }], isActive: true },
+        ],
+      },
+
+      // ---------- TOYS & GAMES ----------
+      {
+        name: "LEGO Classic Building Blocks 500pc",
+        slug: "lego-classic-building-blocks-500",
+        description: "500 colorful building blocks for creative play. Ages 4+.",
+        category: eduToys._id, categories: [eduToys._id, catToys._id],
+        seller: seller2._id, status: "active", brand: "LEGO",
+        attributes: { pieces: "500", ageGroup: "4+" }, taxCode: "GST_12",
+        variantAttributeDefs: [],
+        variants: [
+          { sku: "LCBB-500", attributes: {}, price: 2499, mrp: 3499, stock: 25, images: [{ url: IMG(600,600,"lcbb1"), alt: "LEGO Blocks" }], isActive: true },
+        ],
+      },
+      {
+        name: "Wooden Chess Board Set",
+        slug: "wooden-chess-board-set",
+        description: "Handcrafted wooden chess set with magnetic pieces. Foldable board.",
+        category: chess._id, categories: [chess._id, catToys._id],
+        seller: seller2._id, status: "active", brand: "Stonkraft",
+        attributes: { material: "Wood", size: "12 inch" }, taxCode: "GST_12",
+        variantAttributeDefs: [],
+        variants: [
+          { sku: "WCBS-12", attributes: {}, price: 899, mrp: 1299, stock: 30, images: [{ url: IMG(600,600,"wcbs1"), alt: "Chess Board" }], isActive: true },
+        ],
+      },
+
+      // ---------- AUTOMOTIVE ----------
+      {
+        name: "Universal Car Seat Cover Set",
+        slug: "universal-car-seat-cover-set",
+        description: "Breathable faux leather car seat covers. Fits most sedan and SUV models.",
+        category: carCovers._id, categories: [carCovers._id, catAuto._id],
+        seller: seller2._id, status: "active", brand: "AutoFurnish",
+        attributes: { material: "Faux Leather" }, taxCode: "GST_18",
+        variantAttributeDefs: [{ key: "color", label: "Color", options: ["Black","Beige","Grey"], displayOrder: 0 }],
+        variants: [
+          { sku: "UCSC-BK", attributes: { color: "Black" }, price: 2999, mrp: 4499, stock: 20, images: [{ url: IMG(600,600,"ucsc1"), alt: "Seat Cover Black" }], isActive: true },
+          { sku: "UCSC-BG", attributes: { color: "Beige" }, price: 2999, mrp: 4499, stock: 15, images: [{ url: IMG(600,600,"ucsc2"), alt: "Seat Cover Beige" }], isActive: true },
+        ],
+      },
+      {
+        name: "Studds Marshall Full Face Helmet",
+        slug: "studds-marshall-full-face-helmet",
+        description: "ISI certified full face helmet with anti-scratch visor.",
+        category: helmets._id, categories: [helmets._id, catAuto._id],
+        seller: seller2._id, status: "active", brand: "Studds",
+        attributes: { certification: "ISI" }, taxCode: "GST_18",
+        variantAttributeDefs: [{ key: "color", label: "Color", options: ["Black","White","Red"], displayOrder: 0 }],
+        variants: [
+          { sku: "SMH-BK", attributes: { color: "Black" }, price: 1199, mrp: 1599, stock: 25, images: [{ url: IMG(600,600,"smh1"), alt: "Helmet Black" }], isActive: true },
+          { sku: "SMH-WH", attributes: { color: "White" }, price: 1199, mrp: 1599, stock: 20, images: [{ url: IMG(600,600,"smh2"), alt: "Helmet White" }], isActive: true },
+        ],
+      },
+
+      // ---------- GROCERY ----------
+      {
+        name: "India Gate Basmati Rice 5kg",
+        slug: "india-gate-basmati-rice-5kg",
+        description: "Premium long grain basmati rice. Aged for extra flavor and length.",
+        category: rice._id, categories: [rice._id, catGroc._id],
+        seller: seller1._id, status: "active", brand: "India Gate",
+        attributes: { weight: "5kg", grain: "Long" }, taxCode: "GST_5",
+        variantAttributeDefs: [],
+        variants: [
+          { sku: "IGBR-5KG", attributes: {}, price: 649, mrp: 799, stock: 80, images: [{ url: IMG(600,600,"igbr1"), alt: "Basmati Rice" }], isActive: true },
+        ],
+      },
+      {
+        name: "Tata Gold Premium Tea 1kg",
+        slug: "tata-gold-premium-tea-1kg",
+        description: "Premium blend of long leaf tea for a rich and invigorating taste.",
+        category: tea._id, categories: [tea._id, catGroc._id],
+        seller: seller1._id, status: "active", brand: "Tata",
+        attributes: { weight: "1kg" }, taxCode: "GST_5",
+        variantAttributeDefs: [],
+        variants: [
+          { sku: "TGPT-1KG", attributes: {}, price: 399, mrp: 499, stock: 60, images: [{ url: IMG(600,600,"tgpt1"), alt: "Tata Tea" }], isActive: true },
+        ],
+      },
+
+      // ---------- HEALTH CARE ----------
+      {
+        name: "HealthVit Multivitamin 60 Tablets",
+        slug: "healthvit-multivitamin-60",
+        description: "Daily multivitamin with 25+ essential vitamins and minerals.",
+        category: vitamins._id, categories: [vitamins._id, catHealth._id],
+        seller: seller1._id, status: "active", brand: "HealthVit",
+        attributes: { quantity: "60 tablets" }, taxCode: "GST_12",
+        variantAttributeDefs: [],
+        variants: [
+          { sku: "HVM-60", attributes: {}, price: 449, mrp: 599, stock: 50, images: [{ url: IMG(600,600,"hvm1"), alt: "Multivitamin" }], isActive: true },
+        ],
+      },
+      {
+        name: "Dettol Hand Sanitizer 500ml",
+        slug: "dettol-hand-sanitizer-500ml",
+        description: "Kills 99.9% germs instantly. Moisturizing formula with aloe vera.",
+        category: sanitizers._id, categories: [sanitizers._id, catHealth._id],
+        seller: seller1._id, status: "active", brand: "Dettol",
+        attributes: { volume: "500ml" }, taxCode: "GST_18",
+        variantAttributeDefs: [],
+        variants: [
+          { sku: "DHS-500", attributes: {}, price: 199, mrp: 299, stock: 100, images: [{ url: IMG(600,600,"dhs1"), alt: "Sanitizer" }], isActive: true },
         ],
       },
     ];

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Loader2, SlidersHorizontal, X, LayoutGrid, List, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiGet } from "@/lib/api";
@@ -51,9 +51,36 @@ function ShopContent() {
     [searchParams, router, pathname]
   );
 
+  const removeParams = useCallback(
+    (...keys: string[]) => {
+      const params = new URLSearchParams(searchParams.toString());
+      keys.forEach((k) => params.delete(k));
+      params.set("page", "1");
+      router.push(`${pathname}?${params.toString()}`);
+    },
+    [searchParams, router, pathname]
+  );
+
   const clearFilters = () => {
     router.push(pathname);
   };
+
+  const [localMin, setLocalMin] = useState(currentMin);
+  const [localMax, setLocalMax] = useState(currentMax);
+  const priceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => { setLocalMin(currentMin); }, [currentMin]);
+  useEffect(() => { setLocalMax(currentMax); }, [currentMax]);
+
+  const handlePriceChange = useCallback(
+    (key: "min" | "max", value: string) => {
+      if (key === "min") setLocalMin(value);
+      else setLocalMax(value);
+      if (priceTimer.current) clearTimeout(priceTimer.current);
+      priceTimer.current = setTimeout(() => { updateParam(key, value); }, 500);
+    },
+    [updateParam]
+  );
 
   useEffect(() => {
     apiGet<any>("/api/v1/public/categories")
@@ -109,7 +136,17 @@ function ShopContent() {
       .finally(() => setLoading(false));
   }, [currentCategory, currentSort, currentPage, currentMin, currentMax, currentBrand, currentSearch]);
 
-  const hasFilters = !!(currentCategory || currentMin || currentMax || currentBrand);
+  const hasFilters = !!(currentCategory || currentMin || currentMax || currentBrand || currentSearch);
+
+  const handleCategoryClick = useCallback((slug: string) => {
+    updateParam("category", currentCategory === slug ? "" : slug);
+    setMobileFilterOpen(false);
+  }, [updateParam, currentCategory]);
+
+  const handleBrandClick = useCallback((brand: string) => {
+    updateParam("brand", currentBrand === brand ? "" : brand);
+    setMobileFilterOpen(false);
+  }, [updateParam, currentBrand]);
 
   const filterSidebar = (
     <div className="space-y-6">
@@ -120,7 +157,7 @@ function ShopContent() {
           {categories.map((cat) => (
             <button
               key={cat._id}
-              onClick={() => updateParam("category", currentCategory === cat.slug ? "" : cat.slug)}
+              onClick={() => handleCategoryClick(cat.slug)}
               className={`block w-full text-left px-3 py-2 text-sm rounded transition ${
                 currentCategory === cat.slug
                   ? "bg-blue-50 text-blue-700 font-semibold"
@@ -139,18 +176,20 @@ function ShopContent() {
         <div className="flex items-center gap-2">
           <input
             type="number"
+            inputMode="numeric"
             placeholder="Min"
-            value={currentMin}
-            onChange={(e) => updateParam("min", e.target.value)}
-            className="w-full border rounded px-3 py-2 text-sm"
+            value={localMin}
+            onChange={(e) => handlePriceChange("min", e.target.value)}
+            className="w-full border rounded px-3 py-2.5 text-sm min-w-0"
           />
-          <span className="text-gray-400">-</span>
+          <span className="text-gray-400 shrink-0">-</span>
           <input
             type="number"
+            inputMode="numeric"
             placeholder="Max"
-            value={currentMax}
-            onChange={(e) => updateParam("max", e.target.value)}
-            className="w-full border rounded px-3 py-2 text-sm"
+            value={localMax}
+            onChange={(e) => handlePriceChange("max", e.target.value)}
+            className="w-full border rounded px-3 py-2.5 text-sm min-w-0"
           />
         </div>
       </div>
@@ -158,11 +197,11 @@ function ShopContent() {
       {/* Brand */}
       <div>
         <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3">Brand</h3>
-        <div className="space-y-1">
-          {["Apple", "Samsung", "Sony", "Dell", "Priya Textiles", "Rajasthan Silks", "TechMart", "Levis", "IKEA", "Biba"].map((b) => (
+        <div className="space-y-1 max-h-64 overflow-y-auto">
+          {["Apple", "Samsung", "Sony", "Dell", "boAt", "Priya Textiles", "Rajasthan Silks", "TechMart", "Levis", "IKEA", "Biba", "Boldfit", "LEGO", "Prestige", "Havells", "Dettol", "Tata"].map((b) => (
             <button
               key={b}
-              onClick={() => updateParam("brand", currentBrand === b ? "" : b)}
+              onClick={() => handleBrandClick(b)}
               className={`block w-full text-left px-3 py-2 text-sm rounded transition ${
                 currentBrand === b
                   ? "bg-blue-50 text-blue-700 font-semibold"
@@ -177,7 +216,7 @@ function ShopContent() {
 
       {hasFilters && (
         <button
-          onClick={clearFilters}
+          onClick={() => { clearFilters(); setMobileFilterOpen(false); }}
           className="w-full py-2.5 border border-gray-300 text-sm font-medium rounded hover:bg-gray-50 transition"
         >
           Clear All Filters
@@ -272,7 +311,13 @@ function ShopContent() {
               {(currentMin || currentMax) && (
                 <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1.5 rounded-full">
                   ₹{currentMin || "0"} - ₹{currentMax || "∞"}
-                  <button onClick={() => { updateParam("min", ""); updateParam("max", ""); }}><X size={12} /></button>
+                  <button onClick={() => removeParams("min", "max")}><X size={12} /></button>
+                </span>
+              )}
+              {currentSearch && (
+                <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1.5 rounded-full">
+                  Search: {currentSearch}
+                  <button onClick={() => updateParam("search", "")}><X size={12} /></button>
                 </span>
               )}
             </div>

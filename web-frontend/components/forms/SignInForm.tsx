@@ -1,6 +1,6 @@
 'use client';
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -26,7 +26,7 @@ type SignInFormData = z.infer<typeof signInSchema>;
 const SignInForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuthStore();
+  const { login, isAuthenticated } = useAuthStore();
   const nextPath =
     searchParams.get("redirect") || searchParams.get("next");
   const safeNextPath =
@@ -40,6 +40,12 @@ const SignInForm = () => {
           safeNextPath.includes("become-supplier") ? "&account=supplier" : ""
         }`
       : "/sign-up";
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace(safeNextPath || "/");
+    }
+  }, [isAuthenticated, router, safeNextPath]);
 
   const {
     register,

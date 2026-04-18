@@ -55,6 +55,10 @@ export const getAllProducts = async (req, res) => {
       }
     }
 
+    if (req.query.brand && typeof req.query.brand === "string" && req.query.brand.trim()) {
+      query.brand = { $regex: `^${req.query.brand.trim()}$`, $options: "i" };
+    }
+
     if (req.query.seller) {
       query.seller = req.query.seller;
     }

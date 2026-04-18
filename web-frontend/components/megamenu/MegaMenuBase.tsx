@@ -42,17 +42,17 @@ export default function MegaMenuBase({
         className="
           absolute left-1/2 top-full
           -translate-x-1/2
-          w-[1100px]
-          bg-white border shadow-xl
+          w-[calc(100vw-2rem)] max-w-[1100px]
+          bg-white border shadow-xl rounded-b-lg
           opacity-0 invisible translate-y-3
           group-hover:opacity-100 group-hover:visible group-hover:translate-y-0
           transition-all duration-200
-          z-50
+          z-50 overflow-x-auto
         "
       >
-        <div className="p-8">
+        <div className="p-6 lg:p-8">
 
-          <div className="grid grid-cols-5 gap-x-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-6">
 
            {(data ?? []).map((col)=> (
               <div key={col.columnTitle}>

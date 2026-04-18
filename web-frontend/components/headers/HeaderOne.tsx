@@ -210,14 +210,34 @@ const HeaderOne = () => {
 
 </div>
 
-        {/* Mobile Menu */}
-        <button
-          className="lg:hidden p-2 ml-auto"
-          onClick={() => setIsOpen(true)}
-        >
-          <Menu size={26} />
-        </button>
+        {/* Mobile icons */}
+        <div className="flex lg:hidden items-center gap-3 ml-auto">
+          <Link href="/search" className="p-2 text-gray-700 hover:text-pink-600">
+            <Search size={22} />
+          </Link>
+          <Link href="/cart" className="p-2 text-gray-700 hover:text-pink-600 relative">
+            <ShoppingBag size={22} />
+            {cartCount > 0 && (
+              <span className="absolute top-0.5 right-0.5 bg-pink-600 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">
+                {cartCount}
+              </span>
+            )}
+          </Link>
+          <button
+            className="p-2"
+            onClick={() => setIsOpen(true)}
+          >
+            <Menu size={26} />
+          </button>
+        </div>
 
+      </div>
+
+      {/* MOBILE SEARCH BAR */}
+      <div className="lg:hidden border-t border-purple-200/60 px-3 py-2">
+        <Suspense fallback={null}>
+          <SearchBox />
+        </Suspense>
       </div>
 
       {/* CATEGORY BAR */}
