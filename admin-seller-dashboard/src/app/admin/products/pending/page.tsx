@@ -11,11 +11,20 @@ import { getToken } from "@/helper/tokenHelper";
 
 function toIdString(id: unknown): string | null {
   if (id == null) return null;
-  if (typeof id === "string") return id;
+  if (typeof id === "string") {
+    const t = id.trim();
+    return t.length ? t : null;
+  }
   if (typeof id === "object" && id !== null && "$oid" in (id as Record<string, unknown>)) {
     return String((id as { $oid: string }).$oid);
   }
-  return String(id);
+  const s = String(id);
+  return s && s !== "[object Object]" ? s : null;
+}
+
+function productDocId(doc: { _id?: unknown; id?: unknown } | null | undefined): string | null {
+  if (!doc) return null;
+  return toIdString(doc._id) ?? toIdString(doc.id);
 }
 
 export default function PendingProductsPage() {
@@ -43,8 +52,8 @@ export default function PendingProductsPage() {
       setTotalPages(d?.pagination?.totalPages ?? 1);
       setSelected((prev: any) => {
         if (!prev) return list[0] ?? null;
-        const prevId = toIdString(prev._id);
-        const still = list.find((p: any) => toIdString(p._id) === prevId);
+        const prevId = productDocId(prev);
+        const still = list.find((p: any) => productDocId(p) === prevId);
         return still ?? list[0] ?? null;
       });
     } catch {
@@ -59,18 +68,19 @@ export default function PendingProductsPage() {
   }, [fetchPending, page]);
 
   const handleApprove = async () => {
-    const productId = toIdString(selected?._id);
+    const productId = productDocId(selected);
     if (!productId) {
-      toast.error("Invalid product");
+      toast.error("Invalid product — try selecting the row again.");
       return;
     }
     const token = getToken();
     if (!token) return;
     setActionLoading(true);
     try {
+      // ID is in the URL path (required). Body includes productId so DevTools Payload shows it; server accepts both.
       const res = await axios.post(
         apiUrl(`/api/v1/admin/products/${encodeURIComponent(productId)}/approve`),
-        {},
+        { productId },
         { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
       );
       if (res.data?.success) {
@@ -88,9 +98,9 @@ export default function PendingProductsPage() {
   };
 
   const handleReject = async () => {
-    const productId = toIdString(selected?._id);
+    const productId = productDocId(selected);
     if (!productId) {
-      toast.error("Invalid product");
+      toast.error("Invalid product — try selecting the row again.");
       return;
     }
     if (!rejectNote.trim()) {
@@ -103,7 +113,7 @@ export default function PendingProductsPage() {
     try {
       const res = await axios.post(
         apiUrl(`/api/v1/admin/products/${encodeURIComponent(productId)}/reject`),
-        { note: rejectNote.trim() },
+        { productId, note: rejectNote.trim() },
         { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
       );
       if (res.data?.success) {
@@ -147,12 +157,14 @@ export default function PendingProductsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {items.map((p) => (
+                  {items.map((p, idx) => (
                     <tr
-                      key={p._id}
+                      key={productDocId(p) ?? `pending-row-${idx}`}
                       onClick={() => setSelected(p)}
                       className={`cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
-                        selected?._id === p._id ? "bg-indigo-50 dark:bg-indigo-950/30" : ""
+                        productDocId(selected) && productDocId(selected) === productDocId(p)
+                          ? "bg-indigo-50 dark:bg-indigo-950/30"
+                          : ""
                       }`}
                     >
                       <td className="px-3 py-2">

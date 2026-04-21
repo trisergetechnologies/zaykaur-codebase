@@ -21,6 +21,7 @@ export default function SellersPage() {
   const [productsModal, setProductsModal] = useState<{ seller: any } | null>(null);
   const [productsModalData, setProductsModalData] = useState<{ items: any[]; pagination?: any }>({ items: [] });
   const [productsModalLoading, setProductsModalLoading] = useState(false);
+  const [productListingActionId, setProductListingActionId] = useState<string | null>(null);
   const [rejectNote, setRejectNote] = useState("");
   const [approveNote, setApproveNote] = useState("");
   const [approveActivate, setApproveActivate] = useState(true);
@@ -78,6 +79,62 @@ export default function SellersPage() {
       fetchSellerProducts(productsModal.seller._id);
     }
   }, [productsModal?.seller?._id, fetchSellerProducts]);
+
+  const productRowId = (p: any) => {
+    const id = p?._id ?? p?.id;
+    if (id == null) return "";
+    return typeof id === "string" ? id : String(id);
+  };
+
+  const handleDeactivateListing = async (p: any) => {
+    const id = productRowId(p);
+    if (!id || !productsModal?.seller?._id) return;
+    const token = getToken();
+    if (!token) return;
+    setProductListingActionId(id);
+    try {
+      const res = await axios.post(
+        apiUrl(`/api/v1/admin/products/${encodeURIComponent(id)}/deactivate`),
+        { productId: id },
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+      );
+      if (res.data?.success) {
+        toast.success("Product deactivated (hidden from store)");
+        fetchSellerProducts(productsModal.seller._id);
+      } else {
+        toast.error(res.data?.message || "Could not deactivate");
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Could not deactivate");
+    } finally {
+      setProductListingActionId(null);
+    }
+  };
+
+  const handleReactivateListing = async (p: any) => {
+    const id = productRowId(p);
+    if (!id || !productsModal?.seller?._id) return;
+    const token = getToken();
+    if (!token) return;
+    setProductListingActionId(id);
+    try {
+      const res = await axios.post(
+        apiUrl(`/api/v1/admin/products/${encodeURIComponent(id)}/reactivate`),
+        { productId: id },
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+      );
+      if (res.data?.success) {
+        toast.success("Product reactivated on the store");
+        fetchSellerProducts(productsModal.seller._id);
+      } else {
+        toast.error(res.data?.message || "Could not reactivate");
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Could not reactivate");
+    } finally {
+      setProductListingActionId(null);
+    }
+  };
 
   const handleApprove = async () => {
     if (!approveModal) return;
@@ -453,6 +510,7 @@ export default function SellersPage() {
                       <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Price</th>
                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Updated</th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Listing</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -463,8 +521,13 @@ export default function SellersPage() {
                         typeof p.category === "object" && p.category
                           ? p.category.name ?? "—"
                           : "—";
+                      const st = p.status ?? "";
+                      const rowId = productRowId(p);
+                      const canDeactivate = st === "active" || st === "out_of_stock";
+                      const canReactivate = st === "discontinued";
+                      const busy = productListingActionId === rowId;
                       return (
-                        <tr key={p._id}>
+                        <tr key={rowId || p.slug}>
                           <td className="px-3 py-2">
                             <span className="font-medium text-gray-900 dark:text-white">{p.name ?? "—"}</span>
                             {p.slug && (
@@ -473,9 +536,40 @@ export default function SellersPage() {
                           </td>
                           <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{cat}</td>
                           <td className="px-3 py-2 text-right">{price}</td>
-                          <td className="px-3 py-2 capitalize">{p.status ?? "—"}</td>
+                          <td className="px-3 py-2 capitalize">{st || "—"}</td>
                           <td className="px-3 py-2 text-gray-600 dark:text-gray-400 whitespace-nowrap">
                             {p.updatedAt ? new Date(p.updatedAt).toLocaleString() : "—"}
+                          </td>
+                          <td className="px-3 py-2 text-right whitespace-nowrap">
+                            {canDeactivate && (
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeactivateListing(p);
+                                }}
+                                className="px-2 py-1 text-xs rounded bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50"
+                              >
+                                {busy ? "…" : "Deactivate"}
+                              </button>
+                            )}
+                            {canReactivate && (
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleReactivateListing(p);
+                                }}
+                                className="px-2 py-1 text-xs rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                              >
+                                {busy ? "…" : "Reactivate"}
+                              </button>
+                            )}
+                            {!canDeactivate && !canReactivate && (
+                              <span className="text-xs text-gray-400">—</span>
+                            )}
                           </td>
                         </tr>
                       );

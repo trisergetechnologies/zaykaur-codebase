@@ -2,6 +2,14 @@ import mongoose from "mongoose";
 import Product from "../../models/Product.js";
 import { computeVariantSelectors } from "../../lib/variantHelpers.js";
 
+function resolveProductId(req) {
+  return (
+    (typeof req.params?.productId === "string" && req.params.productId.trim()) ||
+    (typeof req.body?.productId === "string" && req.body.productId.trim()) ||
+    ""
+  );
+}
+
 export const getPendingProducts = async (req, res) => {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
@@ -80,7 +88,7 @@ export const getPendingProductById = async (req, res) => {
 
 export const approveProduct = async (req, res) => {
   try {
-    const rawId = req.params.productId;
+    const rawId = resolveProductId(req);
     if (!mongoose.Types.ObjectId.isValid(rawId)) {
       return res.status(200).json({
         success: false,
@@ -141,7 +149,7 @@ export const approveProduct = async (req, res) => {
 
 export const rejectProduct = async (req, res) => {
   try {
-    const rawId = req.params.productId;
+    const rawId = resolveProductId(req);
     if (!mongoose.Types.ObjectId.isValid(rawId)) {
       return res.status(200).json({
         success: false,
@@ -197,6 +205,130 @@ export const rejectProduct = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Product rejected",
+      data: product,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      data: null,
+    });
+  }
+};
+
+/**
+ * Remove a live listing from the storefront (admin). Allowed from active or out_of_stock.
+ */
+export const deactivateProductListing = async (req, res) => {
+  try {
+    const rawId = resolveProductId(req);
+    if (!mongoose.Types.ObjectId.isValid(rawId)) {
+      return res.status(200).json({
+        success: false,
+        message: "Invalid product id",
+        data: null,
+      });
+    }
+
+    const product = await Product.findOneAndUpdate(
+      {
+        _id: rawId,
+        isDeleted: { $ne: true },
+        status: { $in: ["active", "out_of_stock"] },
+      },
+      {
+        $set: {
+          status: "discontinued",
+          moderationReviewedAt: new Date(),
+          moderationReviewedBy: req.user._id,
+        },
+      },
+      { new: true, runValidators: false }
+    )
+      .populate("category", "name slug")
+      .lean();
+
+    if (!product) {
+      const exists = await Product.findOne({ _id: rawId }).select("status").lean();
+      if (!exists) {
+        return res.status(200).json({
+          success: false,
+          message: "Product not found",
+          data: null,
+        });
+      }
+      return res.status(200).json({
+        success: false,
+        message: `Only active or out-of-stock listings can be deactivated (current status: ${exists.status})`,
+        data: null,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Product deactivated (removed from storefront)",
+      data: product,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      data: null,
+    });
+  }
+};
+
+/**
+ * Restore a discontinued listing to active (admin).
+ */
+export const reactivateProductListing = async (req, res) => {
+  try {
+    const rawId = resolveProductId(req);
+    if (!mongoose.Types.ObjectId.isValid(rawId)) {
+      return res.status(200).json({
+        success: false,
+        message: "Invalid product id",
+        data: null,
+      });
+    }
+
+    const product = await Product.findOneAndUpdate(
+      {
+        _id: rawId,
+        isDeleted: { $ne: true },
+        status: "discontinued",
+      },
+      {
+        $set: {
+          status: "active",
+          moderationReviewedAt: new Date(),
+          moderationReviewedBy: req.user._id,
+        },
+      },
+      { new: true, runValidators: false }
+    )
+      .populate("category", "name slug")
+      .lean();
+
+    if (!product) {
+      const exists = await Product.findOne({ _id: rawId }).select("status").lean();
+      if (!exists) {
+        return res.status(200).json({
+          success: false,
+          message: "Product not found",
+          data: null,
+        });
+      }
+      return res.status(200).json({
+        success: false,
+        message: `Only discontinued products can be reactivated this way (current status: ${exists.status})`,
+        data: null,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Product reactivated on the storefront",
       data: product,
     });
   } catch (error) {
