@@ -36,7 +36,7 @@ export const getMyOnboardingStatus = async (req, res) => {
         message: "Seller onboarding not started",
         data: {
           onboardingStatus: "draft",
-          requiredDocumentTypes: ["gstin", "pan", "aadhaar", "passbook_or_bank_statement"],
+          requiredDocumentTypes: ["gstin", "pan", "aadhaar", "passbook", "bank_statement"],
         },
       });
     }

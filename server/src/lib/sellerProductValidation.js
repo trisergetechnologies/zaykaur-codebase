@@ -32,22 +32,21 @@ export const validateCategoryRequiredVariantAttributes = (category, variants = [
 };
 
 export const validateOnboardingDocuments = (documents = []) => {
-  if (!Array.isArray(documents) || documents.length < 4) {
+  const requiredTypes = ["gstin", "pan", "aadhaar", "passbook", "bank_statement"];
+  if (!Array.isArray(documents) || documents.length < requiredTypes.length) {
     return {
       ok: false,
-      message:
-        "Required documents are missing (gstin, pan, aadhaar and passbook/bank_statement)",
+      message: "Required documents are missing (GSTIN, PAN, Aadhaar, passbook, and bank statement)",
     };
   }
 
-  const required = new Set(["gstin", "pan", "aadhaar"]);
   const available = new Set(
     documents
       .map((document) => String(document?.documentType || "").toLowerCase().trim())
       .filter(Boolean)
   );
 
-  for (const type of required) {
+  for (const type of requiredTypes) {
     if (!available.has(type)) {
       return {
         ok: false,
@@ -56,16 +55,14 @@ export const validateOnboardingDocuments = (documents = []) => {
     }
   }
 
-  if (!available.has("passbook") && !available.has("bank_statement")) {
-    return {
-      ok: false,
-      message: "Either 'passbook' or 'bank_statement' document is required",
-    };
-  }
-
-  const hasMissingUrl = documents.some((document) => !document?.documentUrl);
-  if (hasMissingUrl) {
-    return { ok: false, message: "Each document must include documentUrl" };
+  const byType = new Map(
+    documents.map((d) => [String(d?.documentType || "").toLowerCase().trim(), d])
+  );
+  for (const type of requiredTypes) {
+    const doc = byType.get(type);
+    if (!doc?.documentUrl || !String(doc.documentUrl).trim()) {
+      return { ok: false, message: `Each document must include a file upload (${type})` };
+    }
   }
 
   return { ok: true, message: "" };

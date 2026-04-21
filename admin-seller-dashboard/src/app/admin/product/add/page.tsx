@@ -394,15 +394,18 @@ export default function AddProductPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Listing</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as "draft" | "active")}
                 className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
               >
                 <option value="draft">Draft</option>
-                <option value="active">Active</option>
+                <option value="active">Submit for approval</option>
               </select>
+              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                Submitted listings are reviewed by an admin before they appear in the store.
+              </p>
             </div>
           </div>
         </div>

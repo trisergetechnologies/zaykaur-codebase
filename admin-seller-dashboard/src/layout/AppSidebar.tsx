@@ -33,7 +33,14 @@ type NavItem = {
 
 const adminNavItems: NavItem[] = [
   { icon: <GridIcon />, name: "Dashboard", path: "/admin" },
-  { icon: <BoxIcon />, name: "Products", path: "/admin/product" },
+  {
+    icon: <BoxIcon />,
+    name: "Products",
+    subItems: [
+      { name: "All products", path: "/admin/product" },
+      { name: "Pending approval", path: "/admin/products/pending" },
+    ],
+  },
   { icon: <Layers size={20} />, name: "Categories", path: "/admin/categories" },
   { icon: <Layout size={20} />, name: "Homepage", path: "/admin/homepage" },
   {

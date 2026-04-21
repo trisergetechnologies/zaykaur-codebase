@@ -67,10 +67,14 @@ const productSchema = new mongoose.Schema(
     brand: { type: String, default: "" },
     status: {
       type: String,
-      enum: ["draft", "active", "out_of_stock", "discontinued"],
+      enum: ["draft", "pending_approval", "active", "rejected", "out_of_stock", "discontinued"],
       default: "draft",
       index: true,
     },
+    moderationNote: { type: String, default: "" },
+    moderationReviewedAt: { type: Date, default: null },
+    moderationReviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    moderationSubmittedAt: { type: Date, default: null },
     attributes: { type: mongoose.Schema.Types.Mixed, default: {} }, // e.g. fabric, material
     taxCode: { type: String, default: "" }, // code from tax_rules
     /** Defines variant selectors (RAM, Storage, Size, Color) and their options. Backend derives variantSelectors from this for frontend. */

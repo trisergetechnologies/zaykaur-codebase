@@ -21,6 +21,8 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingDocIndex, setUploadingDocIndex] = useState<number | null>(null);
+  const [ownerPhotoLabel, setOwnerPhotoLabel] = useState<string | null>(null);
+  const [documentFileLabels, setDocumentFileLabels] = useState<Record<number, string>>({});
   const [form, setForm] = useState({
     shopName: "",
     slug: "",
@@ -161,15 +163,11 @@ export default function OnboardingPage() {
     }
     const docs = form.documents.filter((d) => d.documentUrl.trim());
     const types = new Set(docs.map((d) => d.documentType.toLowerCase()));
-    for (const t of ["gstin", "pan", "aadhaar"]) {
+    for (const t of REQUIRED_DOC_TYPES) {
       if (!types.has(t)) {
-        toast.error(`Document required: ${t.toUpperCase()} (with URL)`);
+        toast.error(`Upload required document: ${t.replace(/_/g, " ")}`);
         return;
       }
-    }
-    if (!types.has("passbook") && !types.has("bank_statement")) {
-      toast.error("Upload either passbook or bank statement document");
-      return;
     }
     setSaving(true);
     try {
@@ -214,6 +212,7 @@ export default function OnboardingPage() {
           i === index ? { ...doc, documentUrl: url } : doc
         ),
       }));
+      setDocumentFileLabels((prev) => ({ ...prev, [index]: file.name }));
       toast.success("Document uploaded");
     } catch (err: any) {
       toast.error(err?.message || "Document upload failed");
@@ -228,6 +227,7 @@ export default function OnboardingPage() {
     try {
       const url = await uploadFile(file, "sellers");
       setForm((prev) => ({ ...prev, ownerPhotoUrl: url }));
+      setOwnerPhotoLabel(file.name);
       toast.success("Owner photo uploaded");
     } catch (err: any) {
       toast.error(err?.message || "Owner photo upload failed");
@@ -319,14 +319,16 @@ export default function OnboardingPage() {
                   <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">Owner Photo *</label>
                   <input
                     type="file"
-                    accept="image/png,image/jpeg,image/webp"
+                    accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif,application/pdf"
                     onChange={(e) => uploadOwnerPhoto(e.target.files?.[0] || null)}
                     className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm dark:border-gray-700 dark:bg-gray-800"
                   />
                 </div>
               </div>
               {form.ownerPhotoUrl && (
-                <p className="mt-2 text-xs text-green-600 break-all">Uploaded photo: {form.ownerPhotoUrl}</p>
+                <p className="mt-2 text-xs text-green-600">
+                  {ownerPhotoLabel ? `Uploaded: ${ownerPhotoLabel}` : "Photo uploaded"}
+                </p>
               )}
             </div>
 
@@ -377,7 +379,7 @@ export default function OnboardingPage() {
             <div className="rounded-2xl border border-gray-200 bg-gray-50/60 p-4 dark:border-gray-800 dark:bg-gray-900/30">
               <h3 className="mb-1 text-sm font-semibold text-gray-800 dark:text-gray-100">Document Uploads</h3>
               <p className="mb-3 text-xs text-gray-500">
-                Upload GSTIN, PAN, Aadhaar and either passbook or bank statement.
+                Upload all five: GSTIN, PAN, Aadhaar, passbook, and bank statement (PDF or images).
               </p>
               <div className="space-y-3">
                 {form.documents.map((doc, i) => (
@@ -401,18 +403,21 @@ export default function OnboardingPage() {
                     />
                     <input
                       type="file"
-                      accept=".pdf,image/png,image/jpeg,image/webp,image/gif"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif,application/pdf"
                       onChange={(e) => uploadDocumentFile(i, e.target.files?.[0] || null)}
                       className="lg:col-span-3 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
                     />
-                    <input
-                      type="url"
-                      value={doc.documentUrl}
-                      readOnly
-                      placeholder={uploadingDocIndex === i ? "Uploading..." : "Uploaded file URL"}
-                      className="lg:col-span-4 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
-                      required={status !== "draft"}
-                    />
+                    <div className="lg:col-span-4 flex items-center text-sm text-gray-600 dark:text-gray-300">
+                      {uploadingDocIndex === i ? (
+                        <span>Uploading…</span>
+                      ) : doc.documentUrl ? (
+                        <span className="text-green-600 dark:text-green-400">
+                          {documentFileLabels[i] ? `Uploaded: ${documentFileLabels[i]}` : "File uploaded"}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">No file yet</span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

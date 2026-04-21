@@ -63,6 +63,8 @@ export default function EditProductPage() {
   const [brand, setBrand] = useState("");
   const [taxCode, setTaxCode] = useState("GST_18");
   const [status, setStatus] = useState<"draft" | "active">("draft");
+  const [serverListingStatus, setServerListingStatus] = useState<string | null>(null);
+  const [moderationNote, setModerationNote] = useState("");
   const [variants, setVariants] = useState<VariantForm[]>([]);
   const [shortDescription, setShortDescription] = useState("");
   const [highlights, setHighlights] = useState<string[]>([""]);
@@ -78,7 +80,11 @@ export default function EditProductPage() {
     Promise.all([
       axios.get(apiUrl("/api/v1/public/categories")).then((r) => r.data?.data ?? []),
       token
-        ? axios.get(apiUrl(`/api/v1/public/products/single/${productId}`), { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.data?.data)
+        ? axios
+            .get(apiUrl(`/api/v1/seller/products/${productId}`), {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            .then((r) => r.data?.data)
         : Promise.resolve(null),
     ])
       .then(([catList, product]) => {
@@ -94,7 +100,14 @@ export default function EditProductPage() {
         setDescription(product.description ?? "");
         setBrand(product.brand ?? "");
         setTaxCode(product.taxCode ?? "GST_18");
-        setStatus((product.status === "active" ? "active" : "draft") as "draft" | "active");
+        setServerListingStatus(product.status ?? null);
+        setModerationNote(typeof product.moderationNote === "string" ? product.moderationNote : "");
+        const st = product.status;
+        if (st === "active" || st === "pending_approval") {
+          setStatus("active");
+        } else {
+          setStatus("draft");
+        }
         setShortDescription(product.productDetails?.shortDescription ?? "");
         setHighlights(
           Array.isArray(product.productDetails?.highlights) && product.productDetails.highlights.length
@@ -398,11 +411,26 @@ export default function EditProductPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-              <select value={status} onChange={(e) => setStatus(e.target.value as "draft" | "active")} className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Listing</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as "draft" | "active")}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+              >
                 <option value="draft">Draft</option>
-                <option value="active">Active</option>
+                <option value="active">Submit for approval</option>
               </select>
+              {serverListingStatus === "pending_approval" && (
+                <p className="mt-1.5 text-xs text-amber-800 dark:text-amber-200">
+                  Awaiting admin review. Choose Draft to withdraw from the approval queue.
+                </p>
+              )}
+              {serverListingStatus === "rejected" && moderationNote && (
+                <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
+                  <span className="font-medium">Admin feedback: </span>
+                  {moderationNote}
+                </p>
+              )}
             </div>
           </div>
         </div>

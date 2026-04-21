@@ -1,6 +1,7 @@
 import Category from "../../models/Category.js";
 import Product from "../../models/Product.js";
 import TaxRule from "../../models/TaxRule.js";
+import { computeVariantSelectors } from "../../lib/variantHelpers.js";
 import {
   slugify,
   validateCategoryRequiredVariantAttributes,
@@ -119,6 +120,41 @@ const validateProductPayload = async ({
   };
 };
 
+export const getMyProductById = async (req, res) => {
+  try {
+    const product = await Product.findOne({
+      _id: req.params.productId,
+      seller: req.user._id,
+      isDeleted: { $ne: true },
+    })
+      .populate("category", "name slug")
+      .populate("categories", "name slug");
+
+    if (!product) {
+      return res.status(200).json({
+        success: false,
+        message: "Product not found",
+        data: null,
+      });
+    }
+
+    const productObj = product.toObject();
+    productObj.variantSelectors = computeVariantSelectors(product);
+
+    return res.status(200).json({
+      success: true,
+      message: "Product fetched successfully",
+      data: productObj,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      data: null,
+    });
+  }
+};
+
 export const getMyProducts = async (req, res) => {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
@@ -200,7 +236,21 @@ export const createMyProduct = async (req, res) => {
       });
     }
 
-    const product = await Product.create(validation.data);
+    const data = { ...validation.data };
+    if (req.user.role === "seller") {
+      const wantsPublish = data.status === "active" || data.status === "pending_approval";
+      if (wantsPublish) {
+        data.status = "pending_approval";
+        data.moderationSubmittedAt = new Date();
+        data.moderationNote = "";
+        data.moderationReviewedAt = null;
+        data.moderationReviewedBy = null;
+      } else {
+        data.status = "draft";
+      }
+    }
+
+    const product = await Product.create(data);
     // #region agent log
     agentLog({
       hypothesisId: "H4",
@@ -265,7 +315,25 @@ export const updateMyProduct = async (req, res) => {
       });
     }
 
-    Object.assign(product, validation.data);
+    const data = { ...validation.data };
+    if (req.user.role === "seller") {
+      const prev = product.status;
+      const incoming = data.status;
+      if (incoming === "draft") {
+        data.status = "draft";
+      } else if (prev === "active" && incoming !== "draft") {
+        // Seller edits to an already-live listing stay published unless they move to draft.
+        data.status = "active";
+      } else if (incoming === "active" || incoming === "pending_approval") {
+        data.status = "pending_approval";
+        data.moderationSubmittedAt = new Date();
+        data.moderationNote = "";
+        data.moderationReviewedAt = null;
+        data.moderationReviewedBy = null;
+      }
+    }
+
+    Object.assign(product, data);
     await product.save();
 
     return res.status(200).json({

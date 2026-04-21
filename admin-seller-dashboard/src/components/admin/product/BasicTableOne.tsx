@@ -23,6 +23,7 @@ export interface Product {
   title?: string;
   slug?: string;
   status?: string;
+  moderationNote?: string;
   variants?: { price?: number }[];
   category?: { name?: string; title?: string } | string;
   seller?: { name?: string } | string;
@@ -107,6 +108,17 @@ export default function ProductTable() {
       : "—";
   const displayStatus = (p: Product) => p.status ?? (p.isActive ? "active" : "inactive");
 
+  const formatStatusLabel = (raw: string) => {
+    if (raw === "pending_approval") return "Pending approval";
+    return raw;
+  };
+
+  const statusBadgeColor = (raw: string): "success" | "error" | "warning" => {
+    if (raw === "active") return "success";
+    if (raw === "rejected") return "error";
+    return "warning";
+  };
+
   return (
     <div className="premium-card p-4">
       <div className="flex flex-wrap mb-4 gap-3 items-center">
@@ -141,6 +153,11 @@ export default function ProductTable() {
               <TableCell isHeader className="px-6 py-3 font-semibold">Category</TableCell>
               <TableCell isHeader className="px-6 py-3 font-semibold text-right">Price</TableCell>
               <TableCell isHeader className="px-6 py-3 font-semibold text-center">Status</TableCell>
+              {isSeller && (
+                <TableCell isHeader className="px-6 py-3 font-semibold max-w-xs">
+                  Notes
+                </TableCell>
+              )}
               {isSeller && <TableCell isHeader className="px-6 py-3 font-semibold">Actions</TableCell>}
             </TableRow>
           </TableHeader>
@@ -148,7 +165,7 @@ export default function ProductTable() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={isSeller ? 5 : 4} className="text-center py-8">
+                <TableCell colSpan={isSeller ? 6 : 4} className="text-center py-8">
                   Loading…
                 </TableCell>
               </TableRow>
@@ -173,13 +190,21 @@ export default function ProductTable() {
                     {displayPrice(p)}
                   </TableCell>
                   <TableCell className="px-6 py-4 text-center">
-                    <Badge
-                      size="sm"
-                      color={displayStatus(p) === "active" ? "success" : "warning"}
-                    >
-                      {displayStatus(p)}
+                    <Badge size="sm" color={statusBadgeColor(displayStatus(p))}>
+                      {formatStatusLabel(displayStatus(p))}
                     </Badge>
                   </TableCell>
+                  {isSeller && (
+                    <TableCell className="px-6 py-4 text-xs text-gray-600 dark:text-gray-400 max-w-xs align-top">
+                      {p.status === "rejected" && p.moderationNote ? (
+                        <span className="line-clamp-3" title={p.moderationNote}>
+                          {p.moderationNote}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                  )}
                   {isSeller && (
                     <TableCell className="px-6 py-4">
                       <Link

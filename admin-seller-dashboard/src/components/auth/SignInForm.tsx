@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
@@ -23,10 +23,28 @@ export default function SignInForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { login, isAuthLoading, isAuthenticated, user, sellerAccess } = useAuth();
   const router = useRouter();
 
   const webAppUrl = process.env.NEXT_PUBLIC_WEB_APP_URL || "http://localhost:3000";
+
+  useEffect(() => {
+    if (isAuthLoading || !isAuthenticated || !user) return;
+    if (user.role === "customer") {
+      window.location.href = webAppUrl;
+      return;
+    }
+    if (user.role === "seller") {
+      const approved = sellerAccess?.isApproved ?? false;
+      router.replace(approved ? "/seller/orders" : "/seller/onboarding");
+      return;
+    }
+    if (user.role === "admin" || user.role === "staff") {
+      router.replace("/admin");
+      return;
+    }
+    window.location.href = webAppUrl;
+  }, [isAuthLoading, isAuthenticated, user, sellerAccess, router, webAppUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,6 +132,14 @@ export default function SignInForm() {
       setLoading(false);
     }
   };
+
+  if (isAuthLoading || isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">

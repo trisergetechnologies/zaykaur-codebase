@@ -18,6 +18,9 @@ export default function SellersPage() {
   const [approveModal, setApproveModal] = useState<{ seller: any } | null>(null);
   const [rejectModal, setRejectModal] = useState<{ seller: any } | null>(null);
   const [detailsModal, setDetailsModal] = useState<{ seller: any } | null>(null);
+  const [productsModal, setProductsModal] = useState<{ seller: any } | null>(null);
+  const [productsModalData, setProductsModalData] = useState<{ items: any[]; pagination?: any }>({ items: [] });
+  const [productsModalLoading, setProductsModalLoading] = useState(false);
   const [rejectNote, setRejectNote] = useState("");
   const [approveNote, setApproveNote] = useState("");
   const [approveActivate, setApproveActivate] = useState(true);
@@ -49,6 +52,32 @@ export default function SellersPage() {
   useEffect(() => {
     setPage(1);
   }, [statusFilter]);
+
+  const fetchSellerProducts = useCallback((sellerProfileId: string) => {
+    const token = getToken();
+    if (!token) return;
+    setProductsModalLoading(true);
+    axios
+      .get(apiUrl(`/api/v1/admin/sellers/${sellerProfileId}/products`), {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { page: 1, limit: 100 },
+      })
+      .then((res) => {
+        const d = res.data?.data;
+        setProductsModalData({
+          items: d?.items ?? [],
+          pagination: d?.pagination,
+        });
+      })
+      .catch(() => setProductsModalData({ items: [] }))
+      .finally(() => setProductsModalLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (productsModal?.seller?._id) {
+      fetchSellerProducts(productsModal.seller._id);
+    }
+  }, [productsModal?.seller?._id, fetchSellerProducts]);
 
   const handleApprove = async () => {
     if (!approveModal) return;
@@ -208,13 +237,22 @@ export default function SellersPage() {
                           </>
                         )}
                         {s.onboardingStatus === "approved" && (
-                          <button
-                            onClick={() => handleActivate(s, !s.isActive)}
-                            disabled={!!actionLoading}
-                            className={`px-2 py-1 text-xs rounded text-white disabled:opacity-50 ${s.isActive ? "bg-amber-600 hover:bg-amber-700" : "bg-indigo-600 hover:bg-indigo-700"}`}
-                          >
-                            {actionLoading === s._id ? "..." : s.isActive ? "Deactivate" : "Activate"}
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setProductsModal({ seller: s })}
+                              className="px-2 py-1 text-xs rounded border border-indigo-500 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                            >
+                              View products
+                            </button>
+                            <button
+                              onClick={() => handleActivate(s, !s.isActive)}
+                              disabled={!!actionLoading}
+                              className={`px-2 py-1 text-xs rounded text-white disabled:opacity-50 ${s.isActive ? "bg-amber-600 hover:bg-amber-700" : "bg-indigo-600 hover:bg-indigo-700"}`}
+                            >
+                              {actionLoading === s._id ? "..." : s.isActive ? "Deactivate" : "Activate"}
+                            </button>
+                          </>
                         )}
                       </div>
                     </td>
@@ -384,6 +422,75 @@ export default function SellersPage() {
             <div className="flex justify-end mt-6">
               <button
                 onClick={() => setDetailsModal(null)}
+                className="px-4 py-2 border rounded-lg dark:border-gray-600"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {productsModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setProductsModal(null)} />
+          <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl p-6 max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <h3 className="text-lg font-semibold mb-2">
+              Products — {productsModal.seller.shopName || "Seller"}
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Seller user: {productsModal.seller.userId?.name ?? "—"} ({productsModal.seller.userId?.email ?? "—"})
+            </p>
+            <div className="overflow-auto flex-1 min-h-0 border border-gray-200 dark:border-gray-700 rounded-lg">
+              {productsModalLoading ? (
+                <p className="p-6 text-center text-gray-500">Loading products…</p>
+              ) : (
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                  <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Price</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Updated</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {productsModalData.items.map((p: any) => {
+                      const v0 = p.variants?.[0];
+                      const price = v0?.price != null ? `₹${Number(v0.price).toLocaleString("en-IN")}` : "—";
+                      const cat =
+                        typeof p.category === "object" && p.category
+                          ? p.category.name ?? "—"
+                          : "—";
+                      return (
+                        <tr key={p._id}>
+                          <td className="px-3 py-2">
+                            <span className="font-medium text-gray-900 dark:text-white">{p.name ?? "—"}</span>
+                            {p.slug && (
+                              <span className="block text-xs text-gray-500">{p.slug}</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{cat}</td>
+                          <td className="px-3 py-2 text-right">{price}</td>
+                          <td className="px-3 py-2 capitalize">{p.status ?? "—"}</td>
+                          <td className="px-3 py-2 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                            {p.updatedAt ? new Date(p.updatedAt).toLocaleString() : "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+              {!productsModalLoading && productsModalData.items.length === 0 && (
+                <p className="p-6 text-center text-gray-500">No products for this seller.</p>
+              )}
+            </div>
+            <div className="flex justify-end mt-4">
+              <button
+                type="button"
+                onClick={() => setProductsModal(null)}
                 className="px-4 py-2 border rounded-lg dark:border-gray-600"
               >
                 Close

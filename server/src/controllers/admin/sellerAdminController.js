@@ -1,5 +1,6 @@
 import SellerProfile from "../../models/SellerProfile.js";
 import User from "../../models/User.js";
+import Product from "../../models/Product.js";
 
 const buildSellerListQuery = (req) => {
   const query = { isDeleted: { $ne: true } };
@@ -40,6 +41,64 @@ export const getPendingSellerOnboarding = async (req, res) => {
       success: true,
       message: "Pending seller onboarding fetched successfully",
       data: pending,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      data: null,
+    });
+  }
+};
+
+export const getSellerProductsByProfile = async (req, res) => {
+  try {
+    const { sellerProfileId } = req.params;
+    const profile = await SellerProfile.findOne({
+      _id: sellerProfileId,
+      isDeleted: { $ne: true },
+    })
+      .select("userId")
+      .lean();
+
+    if (!profile?.userId) {
+      return res.status(200).json({
+        success: false,
+        message: "Seller profile not found",
+        data: null,
+      });
+    }
+
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(Math.max(1, Number(req.query.limit) || 50), 100);
+    const skip = (page - 1) * limit;
+    const query = { seller: profile.userId, isDeleted: { $ne: true } };
+    if (req.query.status && typeof req.query.status === "string") {
+      query.status = req.query.status;
+    }
+
+    const [items, total] = await Promise.all([
+      Product.find(query)
+        .populate("category", "name slug")
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Product.countDocuments(query),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: "Seller products fetched successfully",
+      data: {
+        items,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.max(1, Math.ceil(total / limit)),
+        },
+      },
     });
   } catch (error) {
     return res.status(500).json({
