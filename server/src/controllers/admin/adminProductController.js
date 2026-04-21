@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import Product from "../../models/Product.js";
+import Category from "../../models/Category.js";
+import User from "../../models/User.js";
 import { computeVariantSelectors } from "../../lib/variantHelpers.js";
 
 function resolveProductId(req) {
@@ -18,16 +20,47 @@ export const getPendingProducts = async (req, res) => {
 
     const query = { status: "pending_approval", isDeleted: { $ne: true } };
 
-    const [items, total] = await Promise.all([
+    const [rawItems, total] = await Promise.all([
       Product.find(query)
-        .populate("category", "name slug")
-        .populate("seller", "name email phone")
         .sort({ moderationSubmittedAt: -1, createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
       Product.countDocuments(query),
     ]);
+
+    const sellerIds = [
+      ...new Set(
+        rawItems.map((p) => p.seller).filter(Boolean).map((id) => String(id))
+      ),
+    ];
+    const categoryIds = [
+      ...new Set(
+        rawItems.map((p) => p.category).filter(Boolean).map((id) => String(id))
+      ),
+    ];
+
+    const [users, categories] = await Promise.all([
+      sellerIds.length
+        ? User.find({ _id: { $in: sellerIds } })
+            .select("name email phone")
+            .lean()
+        : [],
+      categoryIds.length
+        ? Category.find({ _id: { $in: categoryIds } })
+            .select("name slug")
+            .lean()
+        : [],
+    ]);
+
+    const userById = Object.fromEntries(users.map((u) => [String(u._id), u]));
+    const catById = Object.fromEntries(categories.map((c) => [String(c._id), c]));
+
+    const items = rawItems.map((p) => ({
+      ...p,
+      seller: userById[String(p.seller)] ?? p.seller,
+      category: catById[String(p.category)] ?? p.category,
+    }));
 
     return res.status(200).json({
       success: true,
@@ -230,9 +263,21 @@ export const deactivateProductListing = async (req, res) => {
       });
     }
 
+    let oid;
+    try {
+      oid = new mongoose.Types.ObjectId(rawId);
+    } catch {
+      return res.status(200).json({
+        success: false,
+        message: "Invalid product id",
+        data: null,
+      });
+    }
+
+    // No populate on findOneAndUpdate — populate can throw if refs are broken (Mongoose 9).
     const product = await Product.findOneAndUpdate(
       {
-        _id: rawId,
+        _id: oid,
         isDeleted: { $ne: true },
         status: { $in: ["active", "out_of_stock"] },
       },
@@ -245,11 +290,11 @@ export const deactivateProductListing = async (req, res) => {
       },
       { new: true, runValidators: false }
     )
-      .populate("category", "name slug")
+      .select("_id name slug status updatedAt")
       .lean();
 
     if (!product) {
-      const exists = await Product.findOne({ _id: rawId }).select("status").lean();
+      const exists = await Product.findOne({ _id: oid }).select("status").lean();
       if (!exists) {
         return res.status(200).json({
           success: false,
@@ -292,9 +337,20 @@ export const reactivateProductListing = async (req, res) => {
       });
     }
 
+    let oid;
+    try {
+      oid = new mongoose.Types.ObjectId(rawId);
+    } catch {
+      return res.status(200).json({
+        success: false,
+        message: "Invalid product id",
+        data: null,
+      });
+    }
+
     const product = await Product.findOneAndUpdate(
       {
-        _id: rawId,
+        _id: oid,
         isDeleted: { $ne: true },
         status: "discontinued",
       },
@@ -307,11 +363,11 @@ export const reactivateProductListing = async (req, res) => {
       },
       { new: true, runValidators: false }
     )
-      .populate("category", "name slug")
+      .select("_id name slug status updatedAt")
       .lean();
 
     if (!product) {
-      const exists = await Product.findOne({ _id: rawId }).select("status").lean();
+      const exists = await Product.findOne({ _id: oid }).select("status").lean();
       if (!exists) {
         return res.status(200).json({
           success: false,

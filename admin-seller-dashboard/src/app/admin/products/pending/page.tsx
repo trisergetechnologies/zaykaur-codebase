@@ -56,8 +56,14 @@ export default function PendingProductsPage() {
         const still = list.find((p: any) => productDocId(p) === prevId);
         return still ?? list[0] ?? null;
       });
-    } catch {
+    } catch (err: unknown) {
       setItems([]);
+      const msg = axios.isAxiosError(err)
+        ? err.response?.data?.message || err.message
+        : err instanceof Error
+          ? err.message
+          : "Failed to load pending products";
+      toast.error(typeof msg === "string" ? msg : "Failed to load pending products");
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,9 @@
 import Category from "../../models/Category.js";
 import Product from "../../models/Product.js";
 import TaxRule from "../../models/TaxRule.js";
+
+/** JWT / DB role must match seller; tolerate casing differences in production tokens. */
+const isSellerRole = (user) => String(user?.role ?? "").toLowerCase() === "seller";
 import { computeVariantSelectors } from "../../lib/variantHelpers.js";
 import {
   slugify,
@@ -237,7 +240,7 @@ export const createMyProduct = async (req, res) => {
     }
 
     const data = { ...validation.data };
-    if (req.user.role === "seller") {
+    if (isSellerRole(req.user)) {
       const wantsPublish = data.status === "active" || data.status === "pending_approval";
       if (wantsPublish) {
         data.status = "pending_approval";
@@ -316,7 +319,7 @@ export const updateMyProduct = async (req, res) => {
     }
 
     const data = { ...validation.data };
-    if (req.user.role === "seller") {
+    if (isSellerRole(req.user)) {
       const prev = product.status;
       const incoming = data.status;
       if (incoming === "draft") {
