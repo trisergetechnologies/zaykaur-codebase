@@ -20,8 +20,9 @@ import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
 import MegaMenuNav from "./MegaMenuNav";
-import SearchBox from "./SearchBox";
+import SearchCombobox from "@/components/search/SearchCombobox";
 
+import { getSellerSignInUrl } from "@/lib/sellerPortal";
 import { topCategories } from "@/data/category/topCategories";
 import useAuthStore from "@/store/authStore";
 import useCartStore from "@/store/cartStore";
@@ -40,7 +41,7 @@ const HeaderOne = () => {
 
   const cartCount = cartItems?.length || 0;
   const wishlistCount = isAuthenticated ? wishlistItems?.length || 0 : 0;
-  const sellerPortalUrl = `${(process.env.NEXT_PUBLIC_SELLER_PORTAL_URL|| "").replace(/\/+$/, "")}/signin`;
+  const sellerPortalUrl = getSellerSignInUrl();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -86,7 +87,7 @@ const HeaderOne = () => {
         {/* SEARCH */}
         <div className="hidden lg:block flex-1 max-w-[500px]">
           <Suspense fallback={null}>
-            <SearchBox />
+            <SearchCombobox variant="header" />
           </Suspense>
         </div>
 
@@ -236,7 +237,7 @@ const HeaderOne = () => {
       {/* MOBILE SEARCH BAR */}
       <div className="lg:hidden border-t border-purple-200/60 px-3 py-2">
         <Suspense fallback={null}>
-          <SearchBox />
+          <SearchCombobox variant="mobile" />
         </Suspense>
       </div>
 

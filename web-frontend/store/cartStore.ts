@@ -260,24 +260,28 @@ const useCartStore = create<CartStore>((set, get) => ({
 
   getTotalPrice: () => {
     const { _apiTotals, cartItems } = get();
+    if (!cartItems.length) return 0;
     if (_apiTotals) return _apiTotals.itemsTotal;
     return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
   },
 
   getTax: () => {
-    const { _apiTotals } = get();
+    const { _apiTotals, cartItems } = get();
+    if (!cartItems.length) return 0;
     if (_apiTotals) return _apiTotals.taxTotal;
     return get().getTotalPrice() * 0.05;
   },
 
   getShippingFee: () => {
-    const { _apiTotals } = get();
+    const { _apiTotals, cartItems } = get();
+    if (!cartItems.length) return 0;
     if (_apiTotals) return _apiTotals.shippingEstimate;
     return get().getTotalPrice() > 999 ? 0 : 60;
   },
 
   getTotalAmount: () => {
-    const { _apiTotals } = get();
+    const { _apiTotals, cartItems } = get();
+    if (!cartItems.length) return 0;
     if (_apiTotals) return _apiTotals.grandTotal;
     return get().getTotalPrice() + get().getTax() + get().getShippingFee();
   },

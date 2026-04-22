@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
+import { getSellerSignInUrl } from "@/lib/sellerPortal";
 
 const BecomeSupplierPage = () => {
   useEffect(() => {
-    const base = (process.env.NEXT_PUBLIC_SELLER_PORTAL_URL || "http://localhost:3001").replace(/\/+$/, "");
-    window.location.href = `${base}/signin`;
+    window.location.href = getSellerSignInUrl();
   }, []);
 
   return (

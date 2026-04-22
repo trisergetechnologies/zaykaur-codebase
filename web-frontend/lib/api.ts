@@ -66,8 +66,11 @@ export async function api<T = unknown>(
   return json;
 }
 
-export async function apiGet<T = unknown>(path: string): Promise<ApiResponse<T>> {
-  return api<T>(path, { method: "GET" });
+export async function apiGet<T = unknown>(
+  path: string,
+  options?: Omit<RequestInit, "method">
+): Promise<ApiResponse<T>> {
+  return api<T>(path, { ...options, method: "GET" });
 }
 
 export async function apiPost<T = unknown>(

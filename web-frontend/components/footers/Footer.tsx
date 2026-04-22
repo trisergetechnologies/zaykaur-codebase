@@ -36,8 +36,8 @@ const footerSections = [
     links: [
       { label: "Terms of Service", href: "/terms" },
       { label: "Privacy Policy", href: "/privacy" },
-      { label: "Returns & Refunds", href: "/help" },
-      { label: "Shipping Info", href: "/help" },
+      { label: "Returns & Refunds", href: "/returns-refunds" },
+      { label: "Shipping Info", href: "/shipping" },
     ],
   },
 ];
@@ -88,39 +88,28 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* LARGE LINK SECTION */}
-      <div className="bg-[#0F1111] text-gray-400 py-12">
-        <div className="max-w-screen-xl mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 px-6 text-xs">
-          <div>
-            <p className="text-white font-semibold mb-2">Zaykaur Fashion</p>
-            <p>Premium ethnic collections for modern India.</p>
-          </div>
-          <div>
-            <p className="text-white font-semibold mb-2">Sell with Us</p>
-            <p>Start selling your fashion products on Zaykaur.</p>
-          </div>
-          <div>
-            <p className="text-white font-semibold mb-2">Zaykaur Pay</p>
-            <p>Secure and fast checkout payments.</p>
-          </div>
-          <div>
-            <p className="text-white font-semibold mb-2">Fashion Deals</p>
-            <p>Exclusive seasonal discounts and deals.</p>
-          </div>
-          <div>
-            <p className="text-white font-semibold mb-2">Designer Hub</p>
-            <p>For independent designers and brands.</p>
-          </div>
-          <div>
-            <p className="text-white font-semibold mb-2">Mobile App</p>
-            <p>Shop faster with our upcoming mobile app.</p>
-          </div>
-        </div>
-      </div>
-
       {/* FINAL COPYRIGHT */}
       <div className="bg-[#0F1111] border-t border-gray-800 py-6 text-center text-xs text-gray-500">
-        &copy; {new Date().getFullYear()} ZAYKAUR. All Rights Reserved.
+        <div className="max-w-screen-xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
+          <span>
+            &copy; {new Date().getFullYear()} ZAYKAUR. All Rights Reserved.
+          </span>
+          <span className="hidden sm:inline text-gray-600" aria-hidden>
+            |
+          </span>
+          <Link href="/terms" className="hover:text-gray-300 hover:underline">
+            Terms
+          </Link>
+          <Link href="/privacy" className="hover:text-gray-300 hover:underline">
+            Privacy
+          </Link>
+          <Link
+            href="/returns-refunds"
+            className="hover:text-gray-300 hover:underline"
+          >
+            Returns
+          </Link>
+        </div>
       </div>
     </footer>
   );

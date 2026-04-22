@@ -14,10 +14,17 @@ import { apiPost } from "@/lib/api";
 type Step = "address" | "payment" | "review";
 
 const CheckoutPage = () => {
-
-const router = useRouter();
-
-const { isAuthenticated } = useAuthStore();
+  const router = useRouter();
+  const { isAuthenticated } = useAuthStore();
+  const {
+    cartItems,
+    fetchCart,
+    getTotalPrice,
+    getTax,
+    getShippingFee,
+    getTotalAmount,
+  } = useCartStore();
+  const [cartReady, setCartReady] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -25,13 +32,17 @@ const { isAuthenticated } = useAuthStore();
     }
   }, [isAuthenticated, router]);
 
-  const {
-  cartItems,
-  getTotalPrice,
-  getTax,
-  getShippingFee,
-  getTotalAmount
-} = useCartStore();
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    void fetchCart().finally(() => setCartReady(true));
+  }, [isAuthenticated, fetchCart]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !cartReady) return;
+    if (cartItems.length === 0) {
+      router.replace("/cart");
+    }
+  }, [isAuthenticated, cartReady, cartItems.length, router]);
 
 
   const [step, setStep] = useState<Step>("address");
@@ -50,6 +61,12 @@ const placeOrder = async () => {
   if (!isAuthenticated) {
     toast.error("Please sign in to place an order.");
     router.replace(`/sign-in?redirect=${encodeURIComponent("/checkout")}`);
+    return;
+  }
+
+  if (!cartItems.length) {
+    toast.error("Your cart is empty.");
+    router.replace("/cart");
     return;
   }
 
@@ -87,6 +104,19 @@ const placeOrder = async () => {
     return (
       <section className="flex min-h-screen items-center justify-center bg-slate-50/60 pt-14 pb-6">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-pink-600 border-t-transparent" />
+      </section>
+    );
+  }
+
+  if (!cartReady || cartItems.length === 0) {
+    return (
+      <section className="flex min-h-screen flex-col items-center justify-center gap-3 bg-slate-50/60 px-4 pt-14 pb-6 text-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-pink-600 border-t-transparent" />
+        <p className="text-sm text-slate-600">
+          {cartItems.length === 0 && cartReady
+            ? "Your cart is empty. Taking you back…"
+            : "Loading your cart…"}
+        </p>
       </section>
     );
   }

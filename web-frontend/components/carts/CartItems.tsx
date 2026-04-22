@@ -1,32 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { Minus, Plus, Trash2 } from "lucide-react";
 import useCartStore from "@/store/cartStore";
 import { formatPrice } from "@/lib/formatPrice";
-import { Button } from "@/components/ui/button";
 
 const CartItems = () => {
   const { cartItems, removeFromCart, updateQuantity } = useCartStore();
 
   if (!cartItems || cartItems.length === 0) {
-    return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-pink-50">
-          <ShoppingBag className="h-7 w-7 text-pink-600" />
-        </div>
-        <h3 className="text-lg font-semibold text-slate-900">Your cart is empty</h3>
-        <p className="mb-6 mt-1 text-sm text-slate-500">
-          Looks like you have not added products yet.
-        </p>
-        <Link href="/">
-          <Button className="rounded-lg bg-pink-600 px-7 text-xs font-semibold uppercase tracking-wide hover:bg-pink-700">
-            Shop Now
-          </Button>
-        </Link>
-      </div>
-    );
+    return null;
   }
 
   return (

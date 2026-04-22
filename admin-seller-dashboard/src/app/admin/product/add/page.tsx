@@ -111,7 +111,21 @@ export default function AddProductPage() {
     });
   };
 
-  const onVariantImageChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const validateImageDimensions = (file: File): Promise<{ width: number; height: number }> =>
+    new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.onload = () => {
+        URL.revokeObjectURL(img.src);
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(img.src);
+        reject(new Error("Could not read image dimensions."));
+      };
+      img.src = URL.createObjectURL(file);
+    });
+
+  const onVariantImageChange = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     if (files.length > 5) {
@@ -122,6 +136,30 @@ export default function AddProductPage() {
     if (hasInvalid) {
       setError("Please select only images (JPEG, PNG, WebP, GIF).");
       return;
+    }
+    for (const file of files) {
+      try {
+        const { width, height } = await validateImageDimensions(file);
+        if (width < 600 || height < 600) {
+          setError(
+            `"${file.name}" is ${width}×${height}px. Minimum required is 600×600px. Please use a higher-resolution image.`
+          );
+          e.target.value = "";
+          return;
+        }
+        const ratio = Math.max(width, height) / Math.min(width, height);
+        if (ratio > 1.5) {
+          setError(
+            `"${file.name}" has an unusual aspect ratio (${width}×${height}). For best display, use square or near-square images (1:1 recommended).`
+          );
+          e.target.value = "";
+          return;
+        }
+      } catch {
+        setError(`Could not read dimensions of "${file.name}". Please try a different file.`);
+        e.target.value = "";
+        return;
+      }
     }
     updateVariant(index, "imageFiles", files);
     Promise.all(
@@ -590,6 +628,9 @@ export default function AddProductPage() {
                   onChange={(e) => onVariantImageChange(index, e)}
                   className="w-full text-sm text-gray-600 dark:text-gray-400 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900/30 dark:file:text-indigo-300"
                 />
+                <p className="mt-1.5 text-[11px] text-gray-400 dark:text-gray-500 leading-relaxed">
+                  Recommended: <strong className="text-gray-500 dark:text-gray-400">Square (1:1)</strong> images, at least <strong className="text-gray-500 dark:text-gray-400">800×800px</strong>. Min 600×600px, max 5 MB. JPEG, PNG, or WebP.
+                </p>
                 {v.imagePreviews.length > 0 && (
                   <div className="mt-2 grid grid-cols-5 gap-2">
                     {v.imagePreviews.map((preview, i) => (

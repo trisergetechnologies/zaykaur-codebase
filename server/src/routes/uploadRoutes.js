@@ -1,5 +1,5 @@
 import express from "express";
-import { upload, uploadMultiple } from "../services/storageService.js";
+import { upload, uploadMultiple, cloudinary, deleteFromCloudinary } from "../services/storageService.js";
 import { uploadSingle, uploadMultipleFiles } from "../controllers/uploadController.js";
 
 const router = express.Router();
@@ -103,7 +103,46 @@ const singleFileUpload = (req, res, next) => {
   });
 };
 
-router.post("/", requireCloudinaryEnv, logUploadRequest, setFolder, singleFileUpload, uploadSingle);
+const MIN_IMAGE_DIM = 600;
+const MAX_ASPECT_RATIO = 1.5;
+
+const validateImageDimensions = async (req, res, next) => {
+  if (!req.file || !req.file.filename || !req.file.path) return next();
+  if (req.query.folder !== "products") return next();
+
+  try {
+    const info = await cloudinary.api.resource(req.file.filename, { image_metadata: true });
+    const w = info.width;
+    const h = info.height;
+
+    if (typeof w !== "number" || typeof h !== "number") return next();
+
+    if (w < MIN_IMAGE_DIM || h < MIN_IMAGE_DIM) {
+      await deleteFromCloudinary(req.file.filename).catch(() => {});
+      return res.status(400).json({
+        success: false,
+        message: `Image is ${w}×${h}px. Minimum required is ${MIN_IMAGE_DIM}×${MIN_IMAGE_DIM}px. Please upload a higher-resolution image.`,
+        data: null,
+      });
+    }
+
+    const ratio = Math.max(w, h) / Math.min(w, h);
+    if (ratio > MAX_ASPECT_RATIO) {
+      await deleteFromCloudinary(req.file.filename).catch(() => {});
+      return res.status(400).json({
+        success: false,
+        message: `Image aspect ratio (${w}×${h}) is too extreme. For best results, use square (1:1) images. Maximum allowed ratio is ${MAX_ASPECT_RATIO}:1.`,
+        data: null,
+      });
+    }
+
+    next();
+  } catch {
+    next();
+  }
+};
+
+router.post("/", requireCloudinaryEnv, logUploadRequest, setFolder, singleFileUpload, validateImageDimensions, uploadSingle);
 router.post("/multiple", requireCloudinaryEnv, setFolder, uploadMultiple, uploadMultipleFiles);
 
 export default router;

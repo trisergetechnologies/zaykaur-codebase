@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Product } from "@/types";
 import { calculateDiscount } from "@/lib/calculateDiscount";
-import { Heart, ShoppingCart, Star } from "lucide-react";
+import { Heart, ShoppingBag, Star } from "lucide-react";
 import useCartStore from "@/store/cartStore";
 import useWishlistStore from "@/store/wishlistStore";
 import { showToast } from "@/lib/showToast";
@@ -60,32 +60,27 @@ const SingleProductCartView = ({ product, index = 0 }: { product: Product; index
   return (
     <Link href={`/shop/product/${id}`} className="block h-full">
       <motion.div
-        initial={{ opacity: 0, y: 14 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        whileHover={{ y: -7 }}
-        transition={{ duration: 0.35, ease: "easeOut", delay: staggerDelay }}
-        className="zk-premium-card group relative h-full overflow-hidden rounded-3xl border border-white/70 bg-white/90 backdrop-blur-sm flex flex-col"
+        whileHover={{ y: -4 }}
+        transition={{ duration: 0.3, ease: "easeOut", delay: staggerDelay }}
+        className="zk-card group relative h-full overflow-hidden rounded-2xl bg-white flex flex-col"
       >
-        <span className="zk-card-gradient-ring pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
         {/* IMAGE */}
-        <div className="relative aspect-square sm:aspect-[4/5] bg-slate-100/70 overflow-hidden">
+        <div className="relative aspect-square overflow-hidden bg-slate-50">
           <Image
             src={imgSrc}
             alt={name}
             fill
             loading="lazy"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
           />
 
-          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/30 to-transparent" />
-
-          {/* Out of stock overlay */}
           {outOfStock && (
-            <div className="absolute inset-0 bg-white/75 backdrop-blur-[2px] flex items-center justify-center z-20">
-              <span className="zk-glass-chip text-xs font-semibold px-4 py-1.5 rounded-full text-slate-900">
-                Out of Stock
+            <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex items-center justify-center z-20">
+              <span className="text-[11px] font-semibold text-slate-700 bg-white/80 backdrop-blur px-3 py-1 rounded-full border border-slate-200">
+                Sold Out
               </span>
             </div>
           )}
@@ -93,81 +88,80 @@ const SingleProductCartView = ({ product, index = 0 }: { product: Product; index
           {/* Wishlist */}
           <button
             onClick={handleWishlist}
-            className={`absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full transition-all duration-300 z-30 ${
+            className={`absolute top-2.5 right-2.5 w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 z-30 ${
               inWishlist
-                ? "bg-rose-500 text-white shadow-lg shadow-rose-500/30"
-                : "zk-glass-chip text-slate-600 hover:text-rose-500"
+                ? "bg-rose-500 text-white shadow-md shadow-rose-500/25"
+                : "bg-white/80 backdrop-blur-sm text-slate-500 hover:text-rose-500 hover:bg-white border border-white/60"
             }`}
             aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
           >
-            <Heart size={16} fill={inWishlist ? "currentColor" : "none"} />
+            <Heart size={14} fill={inWishlist ? "currentColor" : "none"} strokeWidth={2} />
           </button>
 
           {/* Discount Badge */}
           {discount > 0 && (
-            <div className="absolute top-3 left-3 zk-discount-chip text-[11px] font-bold px-2.5 py-1 rounded-full z-30">
+            <span className="absolute top-2.5 left-2.5 bg-violet-500/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-md z-30 tracking-wide">
               {discount}% OFF
-            </div>
+            </span>
           )}
-
         </div>
 
         {/* CONTENT */}
-        <div className="relative p-2.5 sm:p-4 flex flex-col gap-1.5 sm:gap-2 flex-1 bg-white/95">
+        <div className="relative px-3 pt-3 pb-3 flex flex-col gap-1.5 flex-1">
           {/* Brand */}
           {brand && (
-            <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400 font-semibold truncate">
+            <span className="text-[10px] uppercase tracking-[0.15em] text-slate-400 font-medium truncate">
               {brand}
             </span>
           )}
 
           {/* Name */}
-          <h3 className="text-sm sm:text-[15px] font-semibold text-slate-900 line-clamp-2 leading-snug transition sm:min-h-[2.7rem] group-hover:text-slate-700">
+          <h3 className="text-[13px] sm:text-sm font-semibold text-slate-800 line-clamp-2 leading-snug min-h-[2.4em] group-hover:text-slate-600 transition-colors">
             {name}
           </h3>
 
-          {/* Reviews */}
-          <div className="flex min-h-0 sm:min-h-[1.35rem] flex-wrap items-center gap-1.5">
+          {/* Rating */}
+          <div className="flex items-center gap-1.5">
             {displayAvg > 0 ? (
               <>
-                <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
+                <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-amber-600">
                   {displayAvg.toFixed(1)}
-                  <Star size={9} className="fill-white" />
+                  <Star size={10} className="fill-amber-400 text-amber-400" />
                 </span>
-                <span className="text-xs text-slate-500">
-                  {displayCount > 0
-                    ? `${displayCount.toLocaleString()} review${displayCount === 1 ? "" : "s"}`
-                    : ""}
-                </span>
+                {displayCount > 0 && (
+                  <span className="text-[10px] text-slate-400">
+                    {displayCount} review{displayCount === 1 ? "" : "s"}
+                  </span>
+                )}
               </>
             ) : (
-              <span className="inline-flex items-center gap-1 text-xs text-slate-400">
-                <Star size={12} className="shrink-0 text-slate-300" />
-                No reviews yet
-              </span>
+              <>
+                <Star size={11} className="text-slate-300" />
+                <span className="text-[10px] text-slate-400">No reviews yet</span>
+              </>
             )}
           </div>
 
           {/* Price */}
-          <div className="flex items-baseline gap-2 mt-auto pt-1.5">
-            <span className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">
+          <div className="flex items-baseline gap-1.5 mt-1">
+            <span className="text-base sm:text-lg font-bold text-slate-900">
               ₹{discountedPrice.toLocaleString()}
             </span>
             {strikePrice != null && strikePrice > discountedPrice && (
-              <span className="text-xs text-slate-400 line-through">
+              <span className="text-[11px] text-slate-400 line-through">
                 ₹{strikePrice.toLocaleString()}
               </span>
             )}
           </div>
 
-          {/* Add to Cart */}
+          {/* Add to Cart — always visible */}
           <button
             disabled={outOfStock}
             onClick={handleQuickAdd}
-            className="mt-1.5 sm:mt-2 w-full min-h-[44px] flex items-center justify-center gap-2 py-2 sm:py-2.5 rounded-xl text-xs font-semibold text-white zk-premium-button disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed"
+            className="zk-cart-btn mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[12px] sm:text-[13px] font-semibold tracking-wide transition-all duration-200 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
           >
-            <ShoppingCart size={14} />
-            {outOfStock ? "Out of Stock" : "Add to Cart"}
+            <ShoppingBag size={14} strokeWidth={2.2} />
+            {outOfStock ? "Sold Out" : "Add to Cart"}
           </button>
         </div>
       </motion.div>
