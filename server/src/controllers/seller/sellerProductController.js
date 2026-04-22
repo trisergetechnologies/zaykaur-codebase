@@ -1,15 +1,19 @@
 import Category from "../../models/Category.js";
 import Product from "../../models/Product.js";
 import TaxRule from "../../models/TaxRule.js";
-
-/** JWT / DB role must match seller; tolerate casing differences in production tokens. */
-const isSellerRole = (user) => String(user?.role ?? "").toLowerCase() === "seller";
 import { computeVariantSelectors } from "../../lib/variantHelpers.js";
 import {
   slugify,
   validateCategoryRequiredVariantAttributes,
   validateVariantImageLimits,
 } from "../../lib/sellerProductValidation.js";
+
+/**
+ * Only `admin` may create/update listings as live (`active`) without moderation.
+ * `seller` and `staff` use the same route (`POST /seller/products`); staff was
+ * previously able to bypass moderation because only `seller` was checked — common in production.
+ */
+const isAdminUser = (user) => String(user?.role ?? "").toLowerCase() === "admin";
 
 const agentLog = (payload) => {
   // #region agent log
@@ -240,7 +244,7 @@ export const createMyProduct = async (req, res) => {
     }
 
     const data = { ...validation.data };
-    if (isSellerRole(req.user)) {
+    if (!isAdminUser(req.user)) {
       const wantsPublish = data.status === "active" || data.status === "pending_approval";
       if (wantsPublish) {
         data.status = "pending_approval";
@@ -319,13 +323,13 @@ export const updateMyProduct = async (req, res) => {
     }
 
     const data = { ...validation.data };
-    if (isSellerRole(req.user)) {
+    if (!isAdminUser(req.user)) {
       const prev = product.status;
       const incoming = data.status;
       if (incoming === "draft") {
         data.status = "draft";
       } else if (prev === "active" && incoming !== "draft") {
-        // Seller edits to an already-live listing stay published unless they move to draft.
+        // Non-admin edits to an already-live listing stay published unless they move to draft.
         data.status = "active";
       } else if (incoming === "active" || incoming === "pending_approval") {
         data.status = "pending_approval";
