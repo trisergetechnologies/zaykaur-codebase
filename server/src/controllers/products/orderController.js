@@ -3,6 +3,10 @@ import Order from "../../models/Order.js";
 import Product from "../../models/Product.js";
 import TaxRule from "../../models/TaxRule.js";
 import User from "../../models/User.js";
+import {
+  validateAppliedCartCouponForOrder,
+  incrementCouponUsage,
+} from "../couponController.js";
 
 export const createOrder = async (req, res) => {
   const reservedStocks = [];
@@ -131,7 +135,13 @@ export const createOrder = async (req, res) => {
     }
 
     const shippingAmount = subtotal >= 999 ? 0 : 80;
-    const discountTotal = 0;
+
+    const { discount: discountTotal, coupon: appliedCoupon } = await validateAppliedCartCouponForOrder(
+      cart,
+      req.user._id,
+      subtotal
+    );
+    const couponCode = appliedCoupon && discountTotal > 0 ? appliedCoupon.code : null;
     const grandTotal = subtotal + taxTotal + shippingAmount - discountTotal;
 
     const order = await Order.create({
@@ -160,6 +170,7 @@ export const createOrder = async (req, res) => {
       taxTotal,
       shippingAmount,
       discountTotal,
+      couponCode,
       grandTotal,
       currency: "INR",
       paymentMethod: paymentMethod === "online" ? "online" : "cod",
@@ -168,6 +179,10 @@ export const createOrder = async (req, res) => {
     });
     orderCreated = true;
     reservedStocks.length = 0;
+
+    if (appliedCoupon && discountTotal > 0) {
+      await incrementCouponUsage(appliedCoupon._id, req.user._id).catch(() => null);
+    }
 
     // Order remains source of truth even if cart cleanup fails.
     await Cart.findOneAndDelete({ userId: req.user._id }).catch(() => null);

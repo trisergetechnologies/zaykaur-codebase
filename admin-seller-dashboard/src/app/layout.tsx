@@ -16,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${outfit.className} antialiased dark:bg-gray-900`}>
+      <body className={`${outfit.className} antialiased`}>
         <AuthProvider>
         <ThemeProvider>
           <SidebarProvider>{children}</SidebarProvider>

@@ -39,6 +39,9 @@ const cartSchema = new mongoose.Schema(
     taxTotal: { type: Number, default: 0 },
     shippingEstimate: { type: Number, default: 0 },
     grandTotal: { type: Number, default: 0 },
+    /** Set only after a successful POST /coupon/apply; cleared on cart change if invalid or remove. */
+    appliedCouponCode: { type: String, default: null },
+    couponDiscount: { type: Number, default: 0 },
     currency: { type: String, default: "INR" },
   },
   { timestamps: true }

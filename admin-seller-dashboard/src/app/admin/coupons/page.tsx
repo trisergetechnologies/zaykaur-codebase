@@ -33,6 +33,8 @@ export default function CouponsPage() {
     usageLimit: "",
     perUserLimit: "1",
     isActive: true,
+    showOnCheckout: false,
+    audience: "all" as "all" | "new_users",
   });
 
   const fetchCoupons = useCallback(() => {
@@ -72,6 +74,8 @@ export default function CouponsPage() {
       usageLimit: "",
       perUserLimit: "1",
       isActive: true,
+      showOnCheckout: false,
+      audience: "all",
     });
     setEditCoupon(null);
     setCreateOpen(false);
@@ -106,6 +110,8 @@ export default function CouponsPage() {
         validTo,
         description: form.description.trim() || undefined,
         isActive: form.isActive,
+        showOnCheckout: form.showOnCheckout,
+        audience: form.audience,
       };
       if (form.minOrderAmount.trim() && !Number.isNaN(Number(form.minOrderAmount))) body.minOrderAmount = Number(form.minOrderAmount);
       if (form.maxDiscount.trim() && !Number.isNaN(Number(form.maxDiscount))) body.maxDiscount = Number(form.maxDiscount);
@@ -154,6 +160,8 @@ export default function CouponsPage() {
         validTo,
         description: form.description.trim() || undefined,
         isActive: form.isActive,
+        showOnCheckout: form.showOnCheckout,
+        audience: form.audience,
       };
       if (form.minOrderAmount.trim() && !Number.isNaN(Number(form.minOrderAmount))) body.minOrderAmount = Number(form.minOrderAmount);
       if (form.maxDiscount.trim() && !Number.isNaN(Number(form.maxDiscount))) body.maxDiscount = Number(form.maxDiscount);
@@ -212,6 +220,8 @@ export default function CouponsPage() {
       usageLimit: c.usageLimit != null ? String(c.usageLimit) : "",
       perUserLimit: c.perUserLimit != null ? String(c.perUserLimit) : "1",
       isActive: c.isActive !== false,
+      showOnCheckout: !!c.showOnCheckout,
+      audience: c.audience === "new_users" ? "new_users" : "all",
     });
   };
 
@@ -221,7 +231,10 @@ export default function CouponsPage() {
       <ComponentCard title="Coupons">
         <div className="mb-4 flex justify-end">
           <button
-            onClick={() => { setCreateOpen(true); resetForm(); setForm({ ...form, code: "", value: "", validFrom: "", validTo: "" }); }}
+            onClick={() => {
+              setCreateOpen(true);
+              resetForm();
+            }}
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"
           >
             Create coupon
@@ -239,6 +252,7 @@ export default function CouponsPage() {
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Valid</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Active</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Checkout</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
@@ -254,6 +268,9 @@ export default function CouponsPage() {
                       {c.validFrom ? new Date(c.validFrom).toLocaleDateString() : "—"} – {c.validTo ? new Date(c.validTo).toLocaleDateString() : "—"}
                     </td>
                     <td className="px-4 py-3">{c.isActive !== false ? "Yes" : "No"}</td>
+                    <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
+                      {c.showOnCheckout ? `Yes (${c.audience === "new_users" ? "new" : "all"})` : "—"}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
                         <button onClick={() => openEdit(c)} className="px-2 py-1 text-xs rounded bg-gray-600 text-white hover:bg-gray-700">Edit</button>
@@ -339,6 +356,25 @@ export default function CouponsPage() {
                 <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
                 <span className="text-sm">Active</span>
               </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={form.showOnCheckout}
+                  onChange={(e) => setForm({ ...form, showOnCheckout: e.target.checked })}
+                />
+                <span className="text-sm">Show on checkout (logged-in customers)</span>
+              </label>
+              <div>
+                <label className="block text-sm font-medium mb-1">Audience</label>
+                <select
+                  value={form.audience}
+                  onChange={(e) => setForm({ ...form, audience: e.target.value as "all" | "new_users" })}
+                  className="w-full border rounded-lg px-3 py-2 dark:bg-gray-800 dark:border-gray-700"
+                >
+                  <option value="all">All customers</option>
+                  <option value="new_users">New customers (no orders yet, or account under 30 days)</option>
+                </select>
+              </div>
               <div className="flex justify-end gap-2 pt-4">
                 <button type="button" onClick={resetForm} className="px-4 py-2 border rounded-lg dark:border-gray-600">Cancel</button>
                 <button type="submit" disabled={actionLoading} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">

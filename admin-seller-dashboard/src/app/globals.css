@@ -134,6 +134,11 @@
 
   --color-theme-purple-500: #7a5af8;
 
+  /* App shell — Notion-adjacent neutrals */
+  --color-surface-page: #f6f5f2;
+  --color-surface-sidebar: rgba(255, 255, 255, 0.92);
+  --color-border-hairline: color-mix(in srgb, var(--color-gray-200) 88%, transparent);
+
   --shadow-theme-md:
     0px 4px 8px -2px rgba(16, 24, 40, 0.1),
     0px 2px 4px -2px rgba(16, 24, 40, 0.06);
@@ -167,6 +172,12 @@
   --z-index-999999: 999999;
 }
 
+html.dark {
+  --color-surface-sidebar: rgba(12, 17, 29, 0.94);
+  --color-surface-page: #0c111d;
+  --color-border-hairline: rgba(255, 255, 255, 0.07);
+}
+
 /*
   The default border color has changed to `currentColor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
@@ -188,12 +199,36 @@
     cursor: pointer;
   }
   body {
-    @apply relative font-normal font-outfit z-1 bg-gray-50 text-gray-900;
-    background:
-      radial-gradient(circle at top right, rgba(70, 95, 255, 0.08), transparent 38%),
-      radial-gradient(circle at bottom left, rgba(122, 90, 248, 0.07), transparent 35%),
-      #f6f7fb;
+    @apply relative font-normal font-outfit z-1 text-gray-900 dark:text-gray-100;
+    background-color: var(--color-surface-page);
+    background-image:
+      radial-gradient(circle at top right, rgba(70, 95, 255, 0.06), transparent 40%),
+      radial-gradient(circle at bottom left, rgba(122, 90, 248, 0.05), transparent 36%);
   }
+
+  html.dark body {
+    background-image:
+      radial-gradient(circle at top right, rgba(70, 95, 255, 0.1), transparent 42%),
+      radial-gradient(circle at bottom left, rgba(122, 90, 248, 0.08), transparent 38%);
+  }
+}
+
+/* Active nav rail */
+a.menu-item.menu-item-active::before,
+button.menu-item.menu-item-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 1.35rem;
+  border-radius: 9999px;
+  background: var(--color-brand-500);
+}
+
+a.menu-dropdown-item.menu-dropdown-item-active {
+  box-shadow: inset 2px 0 0 0 var(--color-brand-500);
 }
 
 @utility menu-item {

@@ -62,8 +62,7 @@ export default function SellerLayout({
       <Backdrop />
       <div className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}>
         <AppHeader />
-        <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
-          <div className="premium-surface rounded-3xl p-4 md:p-5">
+        <div className="mx-auto max-w-(--breakpoint-2xl) p-4 pb-10 md:p-6">
           {sellerLocked && (
             <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
               <div className="flex items-start gap-3">
@@ -78,7 +77,6 @@ export default function SellerLayout({
             </div>
           )}
           {children}
-          </div>
         </div>
       </div>
     </div>

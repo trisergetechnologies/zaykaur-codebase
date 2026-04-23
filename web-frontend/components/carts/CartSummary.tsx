@@ -5,6 +5,7 @@ import useAuthStore from "@/store/authStore";
 import { formatPrice } from "@/lib/formatPrice";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import CheckoutCouponSection from "@/components/checkout/CheckoutCouponSection";
 
 const CartSummary = () => {
 
@@ -15,12 +16,14 @@ const CartSummary = () => {
     getTotalPrice,
     getTax,
     getShippingFee,
-    getTotalAmount
+    getTotalAmount,
+    getCouponDiscount,
   } = useCartStore();
 
   const subtotal = getTotalPrice();
   const tax = getTax();
   const shipping = getShippingFee();
+  const couponOff = getCouponDiscount();
   const total = getTotalAmount();
 
   return (
@@ -50,12 +53,25 @@ const CartSummary = () => {
             <span>Tax</span>
             <span className="font-medium text-slate-900">₹{formatPrice(tax)}</span>
           </div>
+
+          {couponOff > 0 ? (
+            <div className="flex justify-between text-emerald-700">
+              <span>Coupon</span>
+              <span className="font-medium">−₹{formatPrice(couponOff)}</span>
+            </div>
+          ) : null}
         </div>
 
         <div className="flex items-center justify-between border-t border-slate-200 pt-4 text-base font-semibold text-slate-900">
           <span>Total</span>
           <span>₹{formatPrice(total)}</span>
         </div>
+
+        {isAuthenticated ? (
+          <div className="border-t border-slate-200 pt-4">
+            <CheckoutCouponSection />
+          </div>
+        ) : null}
 
         <Button
           onClick={() => {

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import useAuthStore from "@/store/authStore";
 import { apiPost } from "@/lib/api";
+import CheckoutCouponSection from "@/components/checkout/CheckoutCouponSection";
 
 type Step = "address" | "payment" | "review";
 
@@ -23,6 +24,7 @@ const CheckoutPage = () => {
     getTax,
     getShippingFee,
     getTotalAmount,
+    getCouponDiscount,
   } = useCartStore();
   const [cartReady, setCartReady] = useState(false);
 
@@ -55,6 +57,7 @@ const CheckoutPage = () => {
   const subtotal = getTotalPrice();
   const tax = getTax();
   const shipping = getShippingFee();
+  const couponOff = getCouponDiscount();
   const total = getTotalAmount();
 
 const placeOrder = async () => {
@@ -73,19 +76,12 @@ const placeOrder = async () => {
   const toastId = toast.loading("Placing your order...");
 
   try {
-    const shippingAddress = {
-      fullName: selectedAddress?.name || "",
-      phone: selectedAddress?.phone || "",
-      street: selectedAddress?.address || "",
-      city: selectedAddress?.city || "",
-      state: "",
-      postalCode: selectedAddress?.pincode || "",
-      country: "India",
-    };
+    const addrIdx =
+      typeof selectedAddress?._index === "number" ? selectedAddress._index : undefined;
 
-    const res = await apiPost<any>("/api/v1/customer/order", {
+    const res = await apiPost<{ orderNumber?: string; _id?: string }>("/api/v1/customer/order", {
       paymentMethod,
-      shippingAddress,
+      ...(addrIdx != null ? { addressIndex: addrIdx } : {}),
     });
 
     if (res.success && res.data) {
@@ -127,6 +123,8 @@ const placeOrder = async () => {
         <CheckoutSteps currentStep={step} />
         <div className="mt-7 grid grid-cols-1 gap-6 lg:grid-cols-12">
           <div className="space-y-4 lg:col-span-8">
+            <CheckoutCouponSection />
+
             {step === "address" && (
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <h2 className="mb-1 text-lg font-semibold text-slate-900">Delivery Address</h2>
@@ -252,6 +250,13 @@ const placeOrder = async () => {
                 <span>Tax</span>
                 <span className="font-medium text-slate-900">₹{formatPrice(tax)}</span>
               </div>
+
+              {couponOff > 0 ? (
+                <div className="flex justify-between text-emerald-700">
+                  <span>Coupon discount</span>
+                  <span className="font-medium">−₹{formatPrice(couponOff)}</span>
+                </div>
+              ) : null}
             </div>
 
             <div className="flex justify-between border-t border-slate-200 pt-4 text-base font-semibold text-slate-900">

@@ -37,6 +37,14 @@ const couponSchema = new mongoose.Schema(
       { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     ],
     isActive: { type: Boolean, default: true, index: true },
+    /** When true, coupon may appear in GET /coupon/checkout-offers (subject to audience). */
+    showOnCheckout: { type: Boolean, default: false, index: true },
+    /** all = any logged-in user; new_users = no prior orders OR account created within last 30 days. */
+    audience: {
+      type: String,
+      enum: ["all", "new_users"],
+      default: "all",
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

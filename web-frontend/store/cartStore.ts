@@ -23,6 +23,8 @@ interface ApiCartData {
   taxTotal: number;
   shippingEstimate: number;
   grandTotal: number;
+  appliedCouponCode?: string | null;
+  couponDiscount?: number;
 }
 
 type CartStore = {
@@ -33,6 +35,8 @@ type CartStore = {
     taxTotal: number;
     shippingEstimate: number;
     grandTotal: number;
+    appliedCouponCode?: string | null;
+    couponDiscount?: number;
   } | null;
 
   addToCart: (item: CartItem) => void;
@@ -47,7 +51,20 @@ type CartStore = {
   getTax: () => number;
   getShippingFee: () => number;
   getTotalAmount: () => number;
+  getCouponDiscount: () => number;
+  getAppliedCouponCode: () => string | null;
 };
+
+function totalsFromApi(data: ApiCartData) {
+  return {
+    itemsTotal: data.itemsTotal,
+    taxTotal: data.taxTotal,
+    shippingEstimate: data.shippingEstimate,
+    grandTotal: data.grandTotal,
+    appliedCouponCode: data.appliedCouponCode ?? null,
+    couponDiscount: Number(data.couponDiscount) || 0,
+  };
+}
 
 function mapApiCartItems(items: any[]): CartItem[] {
   return (items ?? []).map((item: any) => {
@@ -89,12 +106,7 @@ const useCartStore = create<CartStore>((set, get) => ({
       if (res.success && res.data) {
         set({
           cartItems: mapApiCartItems(res.data.items),
-          _apiTotals: {
-            itemsTotal: res.data.itemsTotal,
-            taxTotal: res.data.taxTotal,
-            shippingEstimate: res.data.shippingEstimate,
-            grandTotal: res.data.grandTotal,
-          },
+          _apiTotals: totalsFromApi(res.data),
         });
         return;
       }
@@ -121,12 +133,7 @@ const useCartStore = create<CartStore>((set, get) => ({
         if (res.success && res.data) {
           set({
             cartItems: mapApiCartItems(res.data.items),
-            _apiTotals: {
-              itemsTotal: res.data.itemsTotal,
-              taxTotal: res.data.taxTotal,
-              shippingEstimate: res.data.shippingEstimate,
-              grandTotal: res.data.grandTotal,
-            },
+            _apiTotals: totalsFromApi(res.data),
           });
         } else if (res.message) {
           toast.error(res.message);
@@ -150,12 +157,7 @@ const useCartStore = create<CartStore>((set, get) => ({
           if (res.success && res.data) {
             set({
               cartItems: mapApiCartItems(res.data.items),
-              _apiTotals: {
-                itemsTotal: res.data.itemsTotal,
-                taxTotal: res.data.taxTotal,
-                shippingEstimate: res.data.shippingEstimate,
-                grandTotal: res.data.grandTotal,
-              },
+              _apiTotals: totalsFromApi(res.data),
             });
             return;
           }
@@ -193,12 +195,7 @@ const useCartStore = create<CartStore>((set, get) => ({
           if (res.success && res.data) {
             set({
               cartItems: mapApiCartItems(res.data.items),
-              _apiTotals: {
-                itemsTotal: res.data.itemsTotal,
-                taxTotal: res.data.taxTotal,
-                shippingEstimate: res.data.shippingEstimate,
-                grandTotal: res.data.grandTotal,
-              },
+              _apiTotals: totalsFromApi(res.data),
             });
             return;
           }
@@ -228,12 +225,7 @@ const useCartStore = create<CartStore>((set, get) => ({
           if (res.success && res.data) {
             set({
               cartItems: mapApiCartItems(res.data.items),
-              _apiTotals: {
-                itemsTotal: res.data.itemsTotal,
-                taxTotal: res.data.taxTotal,
-                shippingEstimate: res.data.shippingEstimate,
-                grandTotal: res.data.grandTotal,
-              },
+              _apiTotals: totalsFromApi(res.data),
             });
             return;
           }
@@ -284,6 +276,18 @@ const useCartStore = create<CartStore>((set, get) => ({
     if (!cartItems.length) return 0;
     if (_apiTotals) return _apiTotals.grandTotal;
     return get().getTotalPrice() + get().getTax() + get().getShippingFee();
+  },
+
+  getCouponDiscount: () => {
+    const { _apiTotals } = get();
+    if (!_apiTotals) return 0;
+    return Math.max(0, Number(_apiTotals.couponDiscount) || 0);
+  },
+
+  getAppliedCouponCode: () => {
+    const { _apiTotals } = get();
+    if (!_apiTotals?.appliedCouponCode) return null;
+    return String(_apiTotals.appliedCouponCode);
   },
 }));
 

@@ -1207,11 +1207,13 @@ async function seedData() {
         code: "WELCOME10", description: "10% off on first order", type: "percent", value: 10,
         minOrderAmount: 500, maxDiscount: 500, usageLimit: 1000, perUserLimit: 1,
         validFrom: now, validTo: in90Days, isActive: true, createdBy: admin._id,
+        showOnCheckout: true, audience: "new_users",
       },
       {
         code: "FLAT200", description: "Flat Rs 200 off on orders above Rs 1500", type: "flat", value: 200,
         minOrderAmount: 1500, maxDiscount: null, usageLimit: 500, perUserLimit: 2,
         validFrom: now, validTo: in30Days, isActive: true, createdBy: admin._id,
+        showOnCheckout: true, audience: "all",
       },
       {
         code: "FASHION15", description: "15% off on fashion category", type: "percent", value: 15,

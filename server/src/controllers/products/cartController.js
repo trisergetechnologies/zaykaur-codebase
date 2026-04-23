@@ -1,12 +1,18 @@
 import Cart from "../../models/Cart.js";
 import Product from "../../models/Product.js";
 import { resolveVariant } from "../../lib/variantHelpers.js";
+import { syncAppliedCouponOnCart } from "../couponController.js";
 
 export const getCart = async (req, res) => {
   try {
     let cart = await Cart.findOne({ userId: req.user._id })
       .populate("items.productId", "name slug category status")
       .populate("items.sellerId", "name");
+
+    if (cart) {
+      await syncAppliedCouponOnCart(cart, req.user._id);
+      if (cart.isModified()) await cart.save();
+    }
 
     if (!cart) {
       return res.status(200).json({
@@ -112,11 +118,7 @@ export const addToCart = async (req, res) => {
       });
     }
 
-    cart.itemsTotal = cart.items.reduce((sum, item) => sum + (item.unitPrice || 0) * item.quantity, 0);
-    cart.taxTotal = Math.round(cart.itemsTotal * 0.05);
-    cart.shippingEstimate = cart.itemsTotal >= 999 ? 0 : 80;
-    cart.grandTotal = cart.itemsTotal + cart.taxTotal + cart.shippingEstimate;
-
+    await syncAppliedCouponOnCart(cart, req.user._id);
     await cart.save();
 
     return res.status(200).json({
@@ -166,11 +168,7 @@ export const removeFromCart = async (req, res) => {
       });
     }
 
-    cart.itemsTotal = cart.items.reduce((sum, item) => sum + (item.unitPrice || 0) * item.quantity, 0);
-    cart.taxTotal = Math.round(cart.itemsTotal * 0.05);
-    cart.shippingEstimate = cart.itemsTotal >= 999 ? 0 : 80;
-    cart.grandTotal = cart.itemsTotal + cart.taxTotal + cart.shippingEstimate;
-
+    await syncAppliedCouponOnCart(cart, req.user._id);
     await cart.save();
 
     return res.status(200).json({

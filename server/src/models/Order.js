@@ -104,6 +104,7 @@ const orderSchema = new mongoose.Schema(
     taxTotal: { type: Number, required: true },
     shippingAmount: { type: Number, required: true },
     discountTotal: { type: Number, default: 0 },
+    couponCode: { type: String, default: null },
     grandTotal: { type: Number, required: true },
     currency: { type: String, default: "INR" },
     paymentMethod: {
