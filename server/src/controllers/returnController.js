@@ -1,6 +1,26 @@
 import ReturnRequest from "../models/ReturnRequest.js";
 import Order from "../models/Order.js";
 
+const RETURN_STATUSES = [
+  "requested",
+  "approved",
+  "rejected",
+  "pickup_scheduled",
+  "picked_up",
+  "received",
+  "refund_initiated",
+  "refund_completed",
+  "closed",
+];
+
+function returnsQuery() {
+  return ReturnRequest.find()
+    .populate("userId", "name email phone")
+    .populate("sellerId", "name email phone")
+    .populate("orderId", "orderNumber createdAt deliveredAt grandTotal orderStatus")
+    .lean();
+}
+
 // ---- Customer endpoints ----
 
 export const createReturnRequest = async (req, res) => {
@@ -51,8 +71,10 @@ export const createReturnRequest = async (req, res) => {
         variantId: item.variantId || orderItem?.variantId,
         name: orderItem?.name || "",
         sku: orderItem?.sku || "",
+        image: orderItem?.productSnapshot?.image || "",
         quantity: item.quantity,
         unitPrice: orderItem?.unitPrice || 0,
+        lineTotal: (orderItem?.unitPrice || 0) * item.quantity,
       };
     });
 
@@ -93,14 +115,25 @@ export const getMyReturnRequests = async (req, res) => {
     const page = Number(req.query.page) || 1;
     const limit = Math.min(Number(req.query.limit) || 10, 50);
     const skip = (page - 1) * limit;
+    const query = { userId: req.user._id };
+
+    // Optional order-level filter for order detail pages.
+    if (req.query.orderId) {
+      query.orderId = req.query.orderId;
+    }
+
+    // Optional status filter for tabs/analytics.
+    if (req.query.status) {
+      query.status = req.query.status;
+    }
 
     const [returns, total] = await Promise.all([
-      ReturnRequest.find({ userId: req.user._id })
+      returnsQuery()
+        .where(query)
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit)
-        .lean(),
-      ReturnRequest.countDocuments({ userId: req.user._id }),
+        .limit(limit),
+      ReturnRequest.countDocuments(query),
     ]);
 
     return res.status(200).json({
@@ -132,12 +165,11 @@ export const getSellerReturnRequests = async (req, res) => {
     if (req.query.status) query.status = req.query.status;
 
     const [returns, total] = await Promise.all([
-      ReturnRequest.find(query)
-        .populate("userId", "name email")
+      returnsQuery()
+        .where(query)
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit)
-        .lean(),
+        .limit(limit),
       ReturnRequest.countDocuments(query),
     ]);
 
@@ -162,6 +194,14 @@ export const updateReturnStatus = async (req, res) => {
   try {
     const { returnId } = req.params;
     const { status, sellerNote } = req.body;
+
+    if (!RETURN_STATUSES.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid return status",
+        data: null,
+      });
+    }
 
     const validTransitions = {
       requested: ["approved", "rejected"],
@@ -226,13 +266,11 @@ export const getAllReturnRequests = async (req, res) => {
     if (req.query.status) query.status = req.query.status;
 
     const [returns, total] = await Promise.all([
-      ReturnRequest.find(query)
-        .populate("userId", "name email")
-        .populate("sellerId", "name email")
+      returnsQuery()
+        .where(query)
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit)
-        .lean(),
+        .limit(limit),
       ReturnRequest.countDocuments(query),
     ]);
 
@@ -257,6 +295,14 @@ export const adminOverrideReturn = async (req, res) => {
   try {
     const { returnId } = req.params;
     const { status, adminNote, refundAmount } = req.body;
+
+    if (!RETURN_STATUSES.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid return status",
+        data: null,
+      });
+    }
 
     const returnReq = await ReturnRequest.findById(returnId);
     if (!returnReq) {

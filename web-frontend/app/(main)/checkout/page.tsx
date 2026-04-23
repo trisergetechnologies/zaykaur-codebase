@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import useAuthStore from "@/store/authStore";
 import { apiPost } from "@/lib/api";
-import CheckoutCouponSection from "@/components/checkout/CheckoutCouponSection";
 
 type Step = "address" | "payment" | "review";
 
@@ -79,14 +78,26 @@ const placeOrder = async () => {
     const addrIdx =
       typeof selectedAddress?._index === "number" ? selectedAddress._index : undefined;
 
-    const res = await apiPost<{ orderNumber?: string; _id?: string; id?: string }>("/api/v1/customer/order", {
+    const res = await apiPost<{
+      orderNumber?: string;
+      _id?: string;
+      id?: string;
+      splitBySeller?: boolean;
+      orderIds?: string[];
+      orderNumbers?: string[];
+    }>("/api/v1/customer/order", {
       paymentMethod,
       ...(addrIdx != null ? { addressIndex: addrIdx } : {}),
     });
 
     if (res.success && res.data) {
       toast.success("Order placed successfully", { id: toastId });
-      const orderId = res.data.orderNumber || res.data._id || res.data.id;
+      const orderId =
+        (Array.isArray(res.data.orderIds) && res.data.orderIds[0]) ||
+        (Array.isArray(res.data.orderNumbers) && res.data.orderNumbers[0]) ||
+        res.data.orderNumber ||
+        res.data._id ||
+        res.data.id;
       router.push(`/order-success?orderId=${encodeURIComponent(String(orderId ?? ""))}`);
       return;
     }
@@ -123,8 +134,6 @@ const placeOrder = async () => {
         <CheckoutSteps currentStep={step} />
         <div className="mt-7 grid grid-cols-1 gap-6 lg:grid-cols-12">
           <div className="space-y-4 lg:col-span-8">
-            <CheckoutCouponSection />
-
             {step === "address" && (
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <h2 className="mb-1 text-lg font-semibold text-slate-900">Delivery Address</h2>

@@ -9,18 +9,67 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { apiUrl } from "@/lib/api";
 import { getToken } from "@/helper/tokenHelper";
 import { useAuth } from "@/context/AuthContext";
+import Image from "next/image";
 
 const ADMIN_OVERRIDE_STATUSES = ["requested", "approved", "rejected", "pickup_scheduled", "picked_up", "received", "refund_initiated", "refund_completed", "closed"];
 const SELLER_STATUSES = ["approved", "rejected", "pickup_scheduled", "picked_up", "received", "refund_initiated", "refund_completed", "closed"];
 
+type ReturnItem = {
+  productId?: string;
+  name?: string;
+  sku?: string;
+  image?: string;
+  quantity?: number;
+  unitPrice?: number;
+  lineTotal?: number;
+};
+
+type ReturnRow = {
+  _id: string;
+  orderId?: string | { _id?: string; orderNumber?: string };
+  userId?: string | { _id?: string; name?: string; email?: string; phone?: string };
+  sellerId?: string | { _id?: string; name?: string; email?: string; phone?: string };
+  reason?: string;
+  description?: string;
+  status: string;
+  refundAmount?: number;
+  createdAt?: string;
+  items?: ReturnItem[];
+  sellerNote?: string;
+  adminNote?: string;
+};
+
+function getId(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (v && typeof v === "object" && "_id" in v) return String((v as { _id?: string })._id || "");
+  return "";
+}
+
+function getName(v: unknown): string {
+  if (v && typeof v === "object" && "name" in v) return String((v as { name?: string }).name || "");
+  return "";
+}
+
+function getEmail(v: unknown): string {
+  if (v && typeof v === "object" && "email" in v) return String((v as { email?: string }).email || "");
+  return "";
+}
+
+function getOrderNo(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (v && typeof v === "object" && "orderNumber" in v) return String((v as { orderNumber?: string }).orderNumber || "");
+  return "";
+}
+
 export default function ReturnsPage() {
-  const [data, setData] = useState<{ items: any[] }>({ items: [] });
+  const [data, setData] = useState<{ items: ReturnRow[] }>({ items: [] });
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const isSeller = user?.role === "seller";
   const path = isSeller ? "/api/v1/seller/returns" : "/api/v1/admin/returns";
-  const [overrideModal, setOverrideModal] = useState<any | null>(null);
-  const [sellerStatusModal, setSellerStatusModal] = useState<any | null>(null);
+  const [overrideModal, setOverrideModal] = useState<ReturnRow | null>(null);
+  const [sellerStatusModal, setSellerStatusModal] = useState<ReturnRow | null>(null);
+  const [detailModal, setDetailModal] = useState<ReturnRow | null>(null);
   const [overrideStatus, setOverrideStatus] = useState("approved");
   const [overrideNote, setOverrideNote] = useState("");
   const [overrideRefund, setOverrideRefund] = useState("");
@@ -123,27 +172,53 @@ export default function ReturnsPage() {
               <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
+                  {!isSeller && <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>}
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Seller</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Refund</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {returns.map((r: any) => (
+                {returns.map((r) => (
                   <tr key={r._id}>
                     <td className="px-4 py-3 text-gray-900 dark:text-white">
-                      {typeof r.orderId === "object" ? r.orderId?.orderNumber ?? r.orderId?._id : r.orderId ?? "—"}
+                      <div className="font-semibold">{getOrderNo(r.orderId) || getId(r.orderId) || "—"}</div>
+                      <div className="text-xs text-gray-500">{getId(r.orderId)}</div>
                     </td>
+                    {!isSeller && (
+                      <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
+                        <div>{getName(r.userId) || "—"}</div>
+                        <div className="text-xs text-gray-500">{getEmail(r.userId)}</div>
+                      </td>
+                    )}
+                    <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
+                      <div>{getName(r.sellerId) || "—"}</div>
+                      <div className="text-xs text-gray-500">{getEmail(r.sellerId)}</div>
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{r.reason || "—"}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{r.status ?? "—"}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400">₹{r.refundAmount ?? 0}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">
+                      {r.createdAt ? new Date(r.createdAt).toLocaleString() : "—"}
+                    </td>
                     <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => setDetailModal(r)}
+                          className="px-2 py-1 text-xs rounded border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                        >
+                          View
+                        </button>
                         {!isSeller && (
                           <button
                             onClick={() => {
                               setOverrideModal(r);
                               setOverrideStatus(r.status || "approved");
                               setOverrideNote("");
-                              setOverrideRefund(r.refundAmount ?? "");
+                              setOverrideRefund(String(r.refundAmount ?? ""));
                             }}
                             className="px-2 py-1 text-xs rounded bg-indigo-600 text-white hover:bg-indigo-700"
                           >
@@ -162,7 +237,8 @@ export default function ReturnsPage() {
                             Update
                           </button>
                         )}
-                      </td>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -178,7 +254,7 @@ export default function ReturnsPage() {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setOverrideModal(null)} />
           <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Override return (Order: {typeof overrideModal.orderId === "object" ? overrideModal.orderId?.orderNumber : overrideModal.orderId})</h3>
+            <h3 className="text-lg font-semibold mb-4">Override return (Order: {getOrderNo(overrideModal.orderId) || getId(overrideModal.orderId)})</h3>
             <div className="space-y-3 mb-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Status</label>
@@ -255,6 +331,79 @@ export default function ReturnsPage() {
               <button onClick={() => setSellerStatusModal(null)} className="px-4 py-2 border rounded-lg dark:border-gray-600">Cancel</button>
               <button onClick={handleSellerStatus} disabled={actionLoading} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
                 {actionLoading ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {detailModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setDetailModal(null)} />
+          <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-1">Return request details</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Order: {getOrderNo(detailModal.orderId) || getId(detailModal.orderId) || "—"} · Status:{" "}
+              <span className="font-medium text-gray-900 dark:text-white">{detailModal.status}</span>
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                <p className="text-xs text-gray-500 uppercase">Customer</p>
+                <p className="font-medium">{getName(detailModal.userId) || "—"}</p>
+                <p className="text-sm text-gray-500">{getEmail(detailModal.userId)}</p>
+              </div>
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                <p className="text-xs text-gray-500 uppercase">Seller</p>
+                <p className="font-medium">{getName(detailModal.sellerId) || "—"}</p>
+                <p className="text-sm text-gray-500">{getEmail(detailModal.sellerId)}</p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40">
+                <p className="font-medium">Returned items</p>
+              </div>
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {(detailModal.items || []).map((item, idx) => (
+                  <div key={`${item.productId || "item"}-${idx}`} className="p-4 flex items-start gap-3">
+                    <div className="relative w-14 h-14 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                      {item.image ? (
+                        <Image src={item.image} alt={item.name || "item"} fill className="object-cover" />
+                      ) : null}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm text-gray-900 dark:text-white">{item.name || "Item"}</p>
+                      <p className="text-xs text-gray-500">SKU: {item.sku || "—"}</p>
+                      <p className="text-xs text-gray-500">
+                        Qty: {item.quantity || 0} · Unit: ₹{item.unitPrice || 0} · Line: ₹{item.lineTotal ?? (item.unitPrice || 0) * (item.quantity || 0)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {(!detailModal.items || detailModal.items.length === 0) && (
+                  <p className="p-4 text-sm text-gray-500">No item details captured.</p>
+                )}
+              </div>
+            </div>
+
+            {(detailModal.description || detailModal.adminNote || detailModal.sellerNote) && (
+              <div className="mt-4 space-y-2 text-sm">
+                {detailModal.description && (
+                  <p><span className="font-medium">Customer note:</span> {detailModal.description}</p>
+                )}
+                {detailModal.sellerNote && (
+                  <p><span className="font-medium">Seller note:</span> {detailModal.sellerNote}</p>
+                )}
+                {detailModal.adminNote && (
+                  <p><span className="font-medium">Admin note:</span> {detailModal.adminNote}</p>
+                )}
+              </div>
+            )}
+
+            <div className="flex justify-end mt-5">
+              <button onClick={() => setDetailModal(null)} className="px-4 py-2 border rounded-lg dark:border-gray-600">
+                Close
               </button>
             </div>
           </div>

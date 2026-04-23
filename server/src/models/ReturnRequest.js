@@ -26,8 +26,10 @@ const returnRequestSchema = new mongoose.Schema(
         variantId: { type: mongoose.Schema.Types.ObjectId },
         name: String,
         sku: String,
+        image: { type: String, default: "" },
         quantity: { type: Number, required: true, min: 1 },
         unitPrice: { type: Number, required: true },
+        lineTotal: { type: Number, default: 0 },
       },
     ],
     reason: {

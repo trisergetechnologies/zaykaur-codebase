@@ -36,21 +36,70 @@ type ReturnRequestBrief = {
   _id: string;
   status: string;
   createdAt?: string;
+  updatedAt?: string;
 };
 
-function formatReturnStatus(status: string): string {
-  const labels: Record<string, string> = {
-    requested: "Request received",
-    approved: "Approved",
-    pickup_scheduled: "Pickup scheduled",
-    picked_up: "Picked up",
-    received: "Received at warehouse",
-    refund_initiated: "Refund started",
-    refund_completed: "Refund completed",
-    closed: "Closed",
-    rejected: "Rejected",
+function getReturnStatusMeta(status: string): {
+  short: string;
+  detail: string;
+  tone: string;
+} {
+  const key = (status || "").toLowerCase();
+  const map: Record<string, { short: string; detail: string; tone: string }> = {
+    requested: {
+      short: "Request received",
+      detail: "We received your return request and it is waiting for review.",
+      tone: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100",
+    },
+    approved: {
+      short: "Approved",
+      detail: "Your return is approved. Pickup will be arranged shortly.",
+      tone: "border-sky-300 bg-sky-50 text-sky-900 dark:border-sky-800 dark:bg-sky-950/50 dark:text-sky-100",
+    },
+    pickup_scheduled: {
+      short: "Pickup scheduled",
+      detail: "Pickup has been scheduled. Keep the item packed and ready.",
+      tone: "border-blue-300 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-100",
+    },
+    picked_up: {
+      short: "Picked up",
+      detail: "Carrier has picked up your item and it is in transit to us.",
+      tone: "border-indigo-300 bg-indigo-50 text-indigo-900 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-100",
+    },
+    received: {
+      short: "Item received",
+      detail: "We have received the returned item and started quality checks.",
+      tone: "border-violet-300 bg-violet-50 text-violet-900 dark:border-violet-800 dark:bg-violet-950/50 dark:text-violet-100",
+    },
+    refund_initiated: {
+      short: "Refund initiated",
+      detail: "Refund is initiated. Bank/payment provider may take 2-7 business days.",
+      tone: "border-cyan-300 bg-cyan-50 text-cyan-900 dark:border-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-100",
+    },
+    refund_completed: {
+      short: "Refund completed",
+      detail: "Refund is completed and has been sent to your original payment method.",
+      tone: "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100",
+    },
+    rejected: {
+      short: "Request rejected",
+      detail: "Your return request was rejected. Contact support for more details.",
+      tone: "border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/50 dark:text-red-100",
+    },
+    closed: {
+      short: "Closed",
+      detail: "Return case is closed.",
+      tone: "border-slate-300 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100",
+    },
   };
-  return labels[status] ?? status.replace(/_/g, " ");
+
+  return (
+    map[key] ?? {
+      short: key ? key.replace(/_/g, " ") : "Return update",
+      detail: "Your return request has a new update.",
+      tone: "border-slate-300 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100",
+    }
+  );
 }
 
 function isActiveReturnStatus(status: string) {
@@ -70,7 +119,17 @@ const OrderDetailPage = () => {
     apiGet<{ items: ReturnRequestBrief[] }>(`/api/v1/customer/returns?orderId=${String(id)}&limit=3`)
       .then((res) => {
         if (res.success && res.data?.items?.length) {
-          setReturnForOrder(res.data.items[0]);
+          // Backend now supports orderId filter; keep client-side guard for resilience.
+          const forThisOrder = res.data.items.find((ret: any) => {
+            const rid =
+              typeof ret?.orderId === "string"
+                ? ret.orderId
+                : ret?.orderId?._id
+                  ? String(ret.orderId._id)
+                  : "";
+            return rid === String(id);
+          });
+          setReturnForOrder(forThisOrder || null);
         } else {
           setReturnForOrder(null);
         }
@@ -210,6 +269,7 @@ const OrderDetailPage = () => {
 
   const isDelivered = order.orderStatus === "delivered";
   const hasOpenReturn = !!(returnForOrder && isActiveReturnStatus(returnForOrder.status));
+  const returnMeta = returnForOrder ? getReturnStatusMeta(returnForOrder.status) : null;
 
   const dateRow = (label: string, value?: string) =>
     value ? (
@@ -242,9 +302,11 @@ const OrderDetailPage = () => {
                 {order.orderNumber}
               </h1>
               <OrderStatusBadge status={order.orderStatus} />
-              {returnForOrder && (
-                <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100">
-                  Return / exchange requested · {formatReturnStatus(returnForOrder.status)}
+              {returnForOrder && returnMeta && (
+                <span
+                  className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${returnMeta.tone}`}
+                >
+                  Return / exchange · {returnMeta.short}
                 </span>
               )}
             </div>
@@ -470,9 +532,21 @@ const OrderDetailPage = () => {
                   Return or exchange lives here so your items stay the focus.
                 </p>
                 {returnForOrder && (
-                  <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
-                    Return / exchange requested — {formatReturnStatus(returnForOrder.status)}
-                  </p>
+                  <div className={`mt-3 rounded-lg border px-3 py-2 text-sm ${returnMeta?.tone ?? ""}`}>
+                    <p className="font-semibold">
+                      {returnMeta?.short ?? "Return update"}
+                    </p>
+                    <p className="mt-1 text-xs opacity-90">{returnMeta?.detail}</p>
+                    {returnForOrder.updatedAt && (
+                      <p className="mt-1 text-[11px] opacity-70">
+                        Last updated:{" "}
+                        {new Date(returnForOrder.updatedAt).toLocaleString(undefined, {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </p>
+                    )}
+                  </div>
                 )}
                 <div className="mt-4">
                   <OrderReturnSheet

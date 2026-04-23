@@ -11,6 +11,7 @@ import {
 export const createOrder = async (req, res) => {
   const reservedStocks = [];
   let orderCreated = false;
+  const createdOrderIds = [];
   try {
     const fail = (message, statusCode = 200) => {
       const error = new Error(message);
@@ -134,49 +135,106 @@ export const createOrder = async (req, res) => {
       fail("No valid items found in cart");
     }
 
-    const shippingAmount = subtotal >= 999 ? 0 : 80;
-
     const { discount: discountTotal, coupon: appliedCoupon } = await validateAppliedCartCouponForOrder(
       cart,
       req.user._id,
       subtotal
     );
     const couponCode = appliedCoupon && discountTotal > 0 ? appliedCoupon.code : null;
-    const grandTotal = subtotal + taxTotal + shippingAmount - discountTotal;
 
-    const order = await Order.create({
-      userId: req.user._id,
-      orderNumber: `ZK-${Date.now()}`,
-      shippingAddress: {
-        fullName: address.fullName,
-        phone: address.phone,
-        street: address.street,
-        city: address.city,
-        state: address.state,
-        postalCode: address.postalCode,
-        country: address.country,
-      },
-      billingAddress: {
-        fullName: address.fullName,
-        phone: address.phone,
-        street: address.street,
-        city: address.city,
-        state: address.state,
-        postalCode: address.postalCode,
-        country: address.country,
-      },
-      items: orderItems,
-      subtotal,
-      taxTotal,
-      shippingAmount,
-      discountTotal,
-      couponCode,
-      grandTotal,
-      currency: "INR",
-      paymentMethod: paymentMethod === "online" ? "online" : "cod",
-      paymentStatus: "pending",
-      orderStatus: "placed",
+    // Enterprise pattern: split checkout by seller into separate orders.
+    const groups = new Map();
+    for (const line of orderItems) {
+      const sellerKey = String(line.sellerId);
+      const existing = groups.get(sellerKey);
+      if (existing) {
+        existing.items.push(line);
+      } else {
+        groups.set(sellerKey, {
+          sellerId: line.sellerId,
+          items: [line],
+        });
+      }
+    }
+
+    const grouped = Array.from(groups.values()).map((g) => {
+      const groupSubtotal = g.items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+      const groupTax = g.items.reduce((sum, i) => sum + (i.taxAmount || 0), 0);
+      return {
+        ...g,
+        subtotal: groupSubtotal,
+        taxTotal: groupTax,
+      };
     });
+
+    const totalSubtotal = grouped.reduce((s, g) => s + g.subtotal, 0);
+    const totalShipping = totalSubtotal >= 999 ? 0 : 80;
+    const shippingByGroup = grouped.map((g, idx) => {
+      if (totalShipping === 0) return 0;
+      if (idx === grouped.length - 1) {
+        const allocated = grouped
+          .slice(0, idx)
+          .reduce((s, _, i) => s + Math.round((grouped[i].subtotal / totalSubtotal) * totalShipping), 0);
+        return Math.max(0, totalShipping - allocated);
+      }
+      return Math.round((g.subtotal / totalSubtotal) * totalShipping);
+    });
+
+    const discountByGroup = grouped.map((g, idx) => {
+      if (!discountTotal) return 0;
+      if (idx === grouped.length - 1) {
+        const allocated = grouped
+          .slice(0, idx)
+          .reduce((s, _, i) => s + Math.round((grouped[i].subtotal / totalSubtotal) * discountTotal), 0);
+        return Math.max(0, discountTotal - allocated);
+      }
+      return Math.round((g.subtotal / totalSubtotal) * discountTotal);
+    });
+
+    const baseOrderNumber = Date.now();
+    const createdOrders = [];
+    for (let idx = 0; idx < grouped.length; idx += 1) {
+      const g = grouped[idx];
+      const shippingAmount = shippingByGroup[idx] || 0;
+      const groupDiscount = Math.min(g.subtotal, discountByGroup[idx] || 0);
+      const grandTotal = g.subtotal + g.taxTotal + shippingAmount - groupDiscount;
+
+      const order = await Order.create({
+        userId: req.user._id,
+        orderNumber: `ZK-${baseOrderNumber}-${idx + 1}`,
+        shippingAddress: {
+          fullName: address.fullName,
+          phone: address.phone,
+          street: address.street,
+          city: address.city,
+          state: address.state,
+          postalCode: address.postalCode,
+          country: address.country,
+        },
+        billingAddress: {
+          fullName: address.fullName,
+          phone: address.phone,
+          street: address.street,
+          city: address.city,
+          state: address.state,
+          postalCode: address.postalCode,
+          country: address.country,
+        },
+        items: g.items,
+        subtotal: g.subtotal,
+        taxTotal: g.taxTotal,
+        shippingAmount,
+        discountTotal: groupDiscount,
+        couponCode,
+        grandTotal,
+        currency: "INR",
+        paymentMethod: paymentMethod === "online" ? "online" : "cod",
+        paymentStatus: "pending",
+        orderStatus: "placed",
+      });
+      createdOrders.push(order);
+      createdOrderIds.push(order._id);
+    }
     orderCreated = true;
     reservedStocks.length = 0;
 
@@ -190,7 +248,15 @@ export const createOrder = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Order placed successfully",
-      data: order,
+      data:
+        createdOrders.length > 1
+          ? {
+              orders: createdOrders,
+              orderIds: createdOrders.map((o) => o._id),
+              orderNumbers: createdOrders.map((o) => o.orderNumber),
+              splitBySeller: true,
+            }
+          : createdOrders[0],
     });
   } catch (error) {
     if (!orderCreated) {
@@ -209,6 +275,9 @@ export const createOrder = async (req, res) => {
           )
         )
       ).catch(() => null);
+    }
+    if (createdOrderIds.length > 0) {
+      await Order.deleteMany({ _id: { $in: createdOrderIds } }).catch(() => null);
     }
 
     const status = error?.statusCode || 500;

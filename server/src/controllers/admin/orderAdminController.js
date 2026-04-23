@@ -40,6 +40,7 @@ export const getAdminOrders = async (req, res) => {
     const [orders, total] = await Promise.all([
       Order.find(query)
         .populate("userId", "name email phone")
+        .populate("items.sellerId", "name email")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -73,6 +74,7 @@ export const getAdminOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.orderId)
       .populate("userId", "name email phone")
+      .populate("items.sellerId", "name email")
       .lean();
     if (!order) {
       return res.status(200).json({

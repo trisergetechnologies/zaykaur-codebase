@@ -170,6 +170,10 @@ export default function OrderDetailsModal({
                 const img = item.productSnapshot?.image ?? item.productThumbnail;
                 const unitPrice = item.unitPrice ?? item.finalPriceAtPurchase ?? 0;
                 const lineTotal = item.lineTotal ?? (item.quantity * unitPrice);
+                const sellerName =
+                  typeof item.sellerId === "object"
+                    ? item.sellerId?.name || item.sellerId?.email || "—"
+                    : "—";
                 return (
                   <div
                     key={i}
@@ -199,6 +203,9 @@ export default function OrderDetailsModal({
                           </span>
                         )}
                       </p>
+                      {!isSeller && (
+                        <p className="text-xs text-gray-500">Seller: {sellerName}</p>
+                      )}
                     </div>
                     <p className="font-medium text-gray-800 dark:text-gray-200">
                       ₹{Number(lineTotal).toLocaleString("en-IN")}

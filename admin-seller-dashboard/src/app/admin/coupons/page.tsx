@@ -16,12 +16,7 @@ function toDateInput(d: string | Date | undefined) {
 }
 
 export default function CouponsPage() {
-  const [coupons, setCoupons] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editCoupon, setEditCoupon] = useState<any | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [form, setForm] = useState({
+  const defaultForm = {
     code: "",
     type: "percent" as "percent" | "flat",
     value: "",
@@ -35,7 +30,14 @@ export default function CouponsPage() {
     isActive: true,
     showOnCheckout: false,
     audience: "all" as "all" | "new_users",
-  });
+  };
+
+  const [coupons, setCoupons] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editCoupon, setEditCoupon] = useState<any | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [form, setForm] = useState(defaultForm);
 
   const fetchCoupons = useCallback(() => {
     const token = getToken();
@@ -62,23 +64,15 @@ export default function CouponsPage() {
   }, [fetchCoupons]);
 
   const resetForm = () => {
-    setForm({
-      code: "",
-      type: "percent",
-      value: "",
-      description: "",
-      validFrom: "",
-      validTo: "",
-      minOrderAmount: "",
-      maxDiscount: "",
-      usageLimit: "",
-      perUserLimit: "1",
-      isActive: true,
-      showOnCheckout: false,
-      audience: "all",
-    });
+    setForm(defaultForm);
     setEditCoupon(null);
     setCreateOpen(false);
+  };
+
+  const openCreate = () => {
+    setEditCoupon(null);
+    setForm(defaultForm);
+    setCreateOpen(true);
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -231,10 +225,7 @@ export default function CouponsPage() {
       <ComponentCard title="Coupons">
         <div className="mb-4 flex justify-end">
           <button
-            onClick={() => {
-              setCreateOpen(true);
-              resetForm();
-            }}
+            onClick={openCreate}
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"
           >
             Create coupon
@@ -371,8 +362,8 @@ export default function CouponsPage() {
                   onChange={(e) => setForm({ ...form, audience: e.target.value as "all" | "new_users" })}
                   className="w-full border rounded-lg px-3 py-2 dark:bg-gray-800 dark:border-gray-700"
                 >
-                  <option value="all">All customers</option>
-                  <option value="new_users">New customers (no orders yet, or account under 30 days)</option>
+                  <option value="all">All users (new + existing)</option>
+                  <option value="new_users">New users only (no orders yet, or account under 30 days)</option>
                 </select>
               </div>
               <div className="flex justify-end gap-2 pt-4">

@@ -24,6 +24,37 @@ const parseDate = (val) => {
   return isNaN(d.getTime()) ? null : d;
 };
 
+const sameSeller = (sellerIdFromItem, sellerId) => {
+  if (sellerIdFromItem == null) return false;
+  if (typeof sellerIdFromItem.equals === "function") return sellerIdFromItem.equals(sellerId);
+  return String(sellerIdFromItem) === String(sellerId);
+};
+
+const sellerScopedOrder = (order, sellerId) => {
+  const scopedItems = (order.items || []).filter((it) => sameSeller(it.sellerId, sellerId));
+  const scopedSubtotal = scopedItems.reduce(
+    (sum, it) => sum + Number(it.unitPrice || 0) * Number(it.quantity || 0),
+    0
+  );
+  const scopedTax = scopedItems.reduce((sum, it) => sum + Number(it.taxAmount || 0), 0);
+  const fullSubtotal = Number(order.subtotal || 0);
+  const shippingShare =
+    fullSubtotal > 0 ? Math.round((scopedSubtotal / fullSubtotal) * Number(order.shippingAmount || 0)) : 0;
+  const discountShare =
+    fullSubtotal > 0 ? Math.round((scopedSubtotal / fullSubtotal) * Number(order.discountTotal || 0)) : 0;
+  const scopedGrand = scopedSubtotal + scopedTax + shippingShare - discountShare;
+  return {
+    ...order,
+    items: scopedItems,
+    subtotal: scopedSubtotal,
+    taxTotal: scopedTax,
+    shippingAmount: shippingShare,
+    discountTotal: discountShare,
+    grandTotal: scopedGrand,
+    sellerScoped: true,
+  };
+};
+
 /**
  * List orders that contain at least one item from the logged-in seller.
  */
@@ -69,11 +100,13 @@ export const getSellerOrders = async (req, res) => {
       Order.countDocuments(query),
     ]);
 
+    const scopedOrders = orders.map((o) => sellerScopedOrder(o, sellerObjId));
+
     return res.status(200).json({
       success: true,
       message: "Orders fetched successfully",
       data: {
-        items: orders,
+        items: scopedOrders,
         pagination: {
           total,
           page,

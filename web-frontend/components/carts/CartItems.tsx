@@ -98,7 +98,7 @@ const CartItems = () => {
             </div>
 
             <div className="mt-4 flex items-center justify-between border-t border-dashed border-slate-200 pt-3">
-              <span className="text-xs font-medium text-slate-500">Assured marketplace seller</span>
+              <span className="text-xs font-medium text-slate-500">Assured ZayKaur seller</span>
               <div className="text-right">
                 <span className="mr-2 text-xs font-medium text-slate-400">Subtotal:</span>
                 <span className="text-sm font-semibold text-slate-900">₹{formatPrice(subtotal)}</span>

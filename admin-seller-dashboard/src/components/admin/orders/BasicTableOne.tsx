@@ -21,6 +21,7 @@ import { useAuth } from "@/context/AuthContext";
 
 interface OrderItem {
   productId?: { _id: string };
+  sellerId?: { _id?: string; name?: string; email?: string } | string;
   productTitle?: string;
   productThumbnail?: string;
   name?: string;
@@ -65,6 +66,17 @@ interface Order {
     pincode: string;
     phone: string;
   };
+}
+
+function sellerNames(order: Order): string {
+  const names = new Set<string>();
+  for (const item of order.items || []) {
+    if (item?.sellerId && typeof item.sellerId === "object") {
+      const name = item.sellerId.name || item.sellerId.email;
+      if (name) names.add(name);
+    }
+  }
+  return names.size ? Array.from(names).join(", ") : "—";
 }
 
 function normalizeOrder(raw: Record<string, unknown>): Order {
@@ -283,6 +295,7 @@ export default function BasicTableOne() {
           <TableHeader className="border-b border-white/70 bg-white/70 dark:border-white/[0.05] dark:bg-gray-800">
             <TableRow>
               <TableCell isHeader>Customer</TableCell>
+              {!isSeller && <TableCell isHeader>Seller(s)</TableCell>}
               <TableCell isHeader>Order #</TableCell>
               <TableCell isHeader>Status</TableCell>
               <TableCell isHeader>Payment</TableCell>
@@ -295,13 +308,13 @@ export default function BasicTableOne() {
           <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-6">
+                <TableCell colSpan={isSeller ? 7 : 8} className="text-center py-6">
                   Loading orders...
                 </TableCell>
               </TableRow>
             ) : orders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-6">
+                <TableCell colSpan={isSeller ? 7 : 8} className="text-center py-6">
                   No orders found.
                 </TableCell>
               </TableRow>
@@ -321,6 +334,11 @@ export default function BasicTableOne() {
                       </span>
                     </div>
                   </TableCell>
+                  {!isSeller && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      {sellerNames(order)}
+                    </TableCell>
+                  )}
                   <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                     {order.orderNumber ?? order._id}
                   </TableCell>

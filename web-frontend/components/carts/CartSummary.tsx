@@ -87,7 +87,7 @@ const CartSummary = () => {
         </Button>
 
         <div className="rounded-lg bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
-          By continuing, you agree to marketplace terms and secure payment policies.
+          By continuing, you agree to ZayKaur terms and secure payment policies.
         </div>
       </div>
     </aside>

@@ -10,7 +10,7 @@ const items = [
   {
     icon: ShieldCheck,
     title: "Curated sellers",
-    body: "Products from verified marketplace partners with clear listings and support.",
+    body: "Products from verified ZayKaur partners with clear listings and support.",
   },
   {
     icon: RotateCcw,

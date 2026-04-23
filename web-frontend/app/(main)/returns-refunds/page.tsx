@@ -12,7 +12,7 @@ export default function ReturnsRefundsPage() {
         </h1>
         <p className="mt-4 text-gray-600">
           We want you to love every ZAYKAUR purchase. Here is how returns and
-          refunds work on our marketplace.
+          refunds work on ZAYKAUR.
         </p>
 
         <div className="mt-10 space-y-8 text-gray-700">
