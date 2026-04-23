@@ -79,7 +79,7 @@ const placeOrder = async () => {
     const addrIdx =
       typeof selectedAddress?._index === "number" ? selectedAddress._index : undefined;
 
-    const res = await apiPost<{ orderNumber?: string; _id?: string }>("/api/v1/customer/order", {
+    const res = await apiPost<{ orderNumber?: string; _id?: string; id?: string }>("/api/v1/customer/order", {
       paymentMethod,
       ...(addrIdx != null ? { addressIndex: addrIdx } : {}),
     });
