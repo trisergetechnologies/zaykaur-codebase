@@ -65,7 +65,9 @@ const WishlistPage = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             <AnimatePresence>
-              {items.map((item) => (
+              {items.map((item) => {
+                const productImage = item.images?.[0] || "/placeholder-product.png";
+                return (
                 <motion.div
                   layout
                   key={item.id}
@@ -77,8 +79,8 @@ const WishlistPage = () => {
                   <div className="relative aspect-square rounded-2xl bg-gray-50 overflow-hidden border border-gray-100">
                     <Link href={`/shop/product/${item.id}`} className="block h-full w-full">
                       <Image
-                        src={item.images?.[0]}
-                        alt={item.name}
+                        src={productImage}
+                        alt={item.name || "Wishlist product"}
                         fill
                         className="object-contain p-6 transition-transform duration-700 group-hover:scale-110"
                       />
@@ -123,7 +125,8 @@ const WishlistPage = () => {
                     </div>
                   </div>
                 </motion.div>
-              ))}
+                );
+              })}
             </AnimatePresence>
           </div>
         )}

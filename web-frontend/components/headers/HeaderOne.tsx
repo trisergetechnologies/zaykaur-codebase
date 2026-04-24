@@ -78,7 +78,7 @@ const HeaderOne = () => {
 
         {/* LOGO */}
         <Link href="/" className="flex items-center gap-1 shrink-0">
-          <span className="text-xl md:text-2xl font-black tracking-tight">
+          <span className="text-xl md:text-2xl font-black tracking-tight text-gray-900">
             ZAYKAUR
           </span>
           <span className="text-2xl md:text-3xl font-black text-pink-600">.</span>

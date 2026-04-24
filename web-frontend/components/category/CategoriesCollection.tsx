@@ -72,7 +72,7 @@ const BestDealsSection = () => {
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 gap-4">
         <div>
           <span className="text-pink-600 font-bold tracking-widest uppercase text-sm">{sectionEyebrow}</span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 mt-2 italic">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 dark:text-white mt-2 italic">
             {sectionTitle}
             <span className="text-pink-600">.</span>
           </h2>
@@ -80,7 +80,7 @@ const BestDealsSection = () => {
 
         <Link
           href={exploreHref}
-          className="group flex items-center gap-2 text-base sm:text-lg font-bold hover:text-pink-600 transition-colors shrink-0"
+          className="group flex items-center gap-2 text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 hover:text-pink-600 transition-colors shrink-0"
         >
           {exploreLabel}
           <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />

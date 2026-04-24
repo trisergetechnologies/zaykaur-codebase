@@ -76,11 +76,11 @@ const OfferBannerGrid = () => {
 
       {/* SECTION HEADER */}
       <div className="mb-6 sm:mb-10">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
           {sectionTitle}
         </h2>
 
-        <p className="text-gray-500 mt-2 text-sm md:text-base max-w-lg">
+        <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm md:text-base max-w-lg">
           {sectionSubtitle}
         </p>
       </div>

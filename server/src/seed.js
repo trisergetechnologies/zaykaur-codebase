@@ -8,7 +8,7 @@
  *   Seller 1:   seller@zaykaur.com     / 123456  (Priya Textiles – ethnic wear)
  *   Seller 2:   seller2@zaykaur.com    / 123456  (Rajasthan Silks – silk/banarasi)
  *   Seller 3:   seller3@zaykaur.com    / 123456  (TechMart India – electronics)
- *   Customer 1: customer1@zaykaur.com  / 123456  (Anita Sharma – has orders, cart, wishlist)
+ *   Customer 1: customer1@zaykaur.com  / 123456  (Anita Sharma – has orders, cart)
  *   Customer 2: customer2@zaykaur.com  / 123456  (Rahul Verma)
  */
 
@@ -1481,32 +1481,10 @@ async function seedData() {
     // =====================================================================
     // 14. WISHLIST
     // =====================================================================
-    await Wishlist.insertMany([
-      { userId: customer1._id, productId: P["designer-lehenga-choli-set"]._id },
-      { userId: customer1._id, productId: P["apple-iphone-16"]._id },
-      { userId: customer1._id, productId: P["sony-wh-1000xm5"]._id },
-      { userId: customer1._id, productId: P["vitamin-c-face-serum"]._id },
-      { userId: customer2._id, productId: P["probook-15-laptop"]._id },
-      { userId: customer2._id, productId: P["men-cotton-kurta-pyjama"]._id },
-      { userId: customer2._id, productId: P["samsung-55-4k-smart-tv"]._id },
-    ]);
-    // Also set the User.wishlist array for backward compat
-    await User.findByIdAndUpdate(customer1._id, {
-      wishlist: [
-        P["designer-lehenga-choli-set"]._id,
-        P["apple-iphone-16"]._id,
-        P["sony-wh-1000xm5"]._id,
-        P["vitamin-c-face-serum"]._id,
-      ],
-    });
-    await User.findByIdAndUpdate(customer2._id, {
-      wishlist: [
-        P["probook-15-laptop"]._id,
-        P["men-cotton-kurta-pyjama"]._id,
-        P["samsung-55-4k-smart-tv"]._id,
-      ],
-    });
-    console.log("  Wishlist seeded (7)");
+    // Keep wishlist empty by default for cleaner QA and real-world behavior.
+    await User.findByIdAndUpdate(customer1._id, { wishlist: [] });
+    await User.findByIdAndUpdate(customer2._id, { wishlist: [] });
+    console.log("  Wishlist seeded (0)");
 
     // =====================================================================
     // 15. NOTIFICATIONS
