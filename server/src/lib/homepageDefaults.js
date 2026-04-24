@@ -4,6 +4,7 @@
  */
 export function getDefaultHomepageContent() {
   return {
+    featuredProductIds: [],
     heroSlides: [
       {
         title: "Dominate the Competition with the Legion X7",

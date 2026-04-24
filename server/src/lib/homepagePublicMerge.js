@@ -2,6 +2,20 @@ import { getDefaultHomepageContent } from "./homepageDefaults.js";
 
 const t = (s) => (typeof s === "string" ? s.trim() : s ? String(s).trim() : "");
 
+const MAX_FEATURED = 30;
+
+function normalizeFeaturedProductIds(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const id of raw) {
+    const s = id != null ? String(id).trim() : "";
+    if (!/^[a-fA-F0-9]{24}$/.test(s)) continue;
+    out.push(s);
+    if (out.length >= MAX_FEATURED) break;
+  }
+  return out;
+}
+
 function isValidHeroSlides(slides) {
   return (
     Array.isArray(slides) &&
@@ -91,7 +105,10 @@ export function mergeHomepageForPublic(saved) {
     };
   }
 
+  const featuredProductIds = normalizeFeaturedProductIds(o.featuredProductIds);
+
   return {
+    featuredProductIds,
     heroSlides,
     topCategoryStrip,
     bestDeals,

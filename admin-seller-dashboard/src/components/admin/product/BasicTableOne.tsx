@@ -180,7 +180,7 @@ export default function ProductTable() {
                       {displayName(p)}
                     </span>
                     {p.slug && (
-                      <span className="block text-xs text-gray-500">{p.slug}</span>
+                      <span className="block text-xs text-gray-500">Listing: {p.slug}</span>
                     )}
                   </TableCell>
                   <TableCell className="px-6 py-4 text-gray-600 dark:text-gray-300">

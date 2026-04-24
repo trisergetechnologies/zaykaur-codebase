@@ -20,12 +20,29 @@ export type HomepageBestDealTile = {
   link: string;
   gridClass: string;
   badge?: string;
+  curatedSlug?: string;
+  landingTitle?: string;
+  landingSubtitle?: string;
+  productIds?: string[];
+};
+
+export type HomepageTrendingTilePreview = {
+  _id: string;
+  name: string;
+  slug: string;
+  image: string;
 };
 
 export type HomepageTrendingTile = {
   title: string;
   image: string;
   link?: string;
+  curatedSlug?: string;
+  landingTitle?: string;
+  landingSubtitle?: string;
+  productIds?: string[];
+  /** Populated by public homepage API when tile has productIds */
+  previewProducts?: HomepageTrendingTilePreview[];
 };
 
 export type HomepagePayload = {
@@ -50,5 +67,15 @@ export type HomepagePayload = {
     };
     tiles: HomepageTrendingTile[];
   };
+  /** Raw API products when admin configured featured IDs (use normalizeProducts). */
+  featuredProducts?: unknown[];
   updatedAt?: string | null;
+};
+
+export type CuratedCollectionPayload = {
+  slug: string;
+  title: string;
+  subtitle: string;
+  heroImage: string;
+  products: unknown[];
 };

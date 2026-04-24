@@ -18,7 +18,6 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
-import { ThemeToggle } from "../theme/ThemeToggle";
 import { Separator } from "../ui/separator";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -101,14 +100,6 @@ const MobileHeader = () => {
                   <span>{link.label}</span>
                 </Link>
               ))}
-            </div>
-
-            <Separator />
-
-            {/* Theme Toggle */}
-            <div className="flex items-center gap-3">
-              <ThemeToggle />
-              <span>Change Theme</span>
             </div>
 
             <Separator />

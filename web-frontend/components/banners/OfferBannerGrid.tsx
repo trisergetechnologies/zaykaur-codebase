@@ -5,6 +5,11 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useHomepageMerchandising } from "@/context/HomepageMerchandisingContext";
 import { normalizeStoreHref } from "@/lib/normalizeStoreHref";
+import { trendingTileHref } from "@/lib/homepageTileHref";
+import type { HomepageTrendingTile } from "@/types/homepage";
+
+const PREVIEW_IMG_FALLBACK =
+  "https://picsum.photos/seed/trending-preview/80/80";
 
 const defaultCategories = [
   {
@@ -61,15 +66,31 @@ const OfferBannerGrid = () => {
       }
     : defaultPromo;
 
-  const categories =
+  type TrendingCard = HomepageTrendingTile & { link: string };
+
+  const categories: TrendingCard[] =
     tf?.tiles?.length &&
     tf.tiles.every((t) => t.title?.trim() && t.image?.trim())
       ? tf.tiles.map((t) => ({
           title: t.title,
           image: t.image,
           link: (t.link || "").trim(),
+          curatedSlug: t.curatedSlug,
+          landingTitle: t.landingTitle,
+          landingSubtitle: t.landingSubtitle,
+          productIds: Array.isArray(t.productIds)
+            ? t.productIds.map((id) => String(id))
+            : [],
+          previewProducts: Array.isArray(t.previewProducts)
+            ? t.previewProducts.map((p) => ({
+                _id: String(p._id),
+                name: p.name,
+                slug: p.slug,
+                image: p.image,
+              }))
+            : [],
         }))
-      : defaultCategories;
+      : (defaultCategories as TrendingCard[]);
 
   return (
     <section className="max-w-[1600px] mx-auto px-3 sm:px-4 py-10 sm:py-14">
@@ -134,6 +155,7 @@ const OfferBannerGrid = () => {
         {/* CATEGORY CARDS */}
         <div className="lg:col-span-3 grid sm:grid-cols-2 gap-4 sm:gap-6">
           {categories.map((item, index) => {
+            const previews = item.previewProducts?.filter((p) => p._id) ?? [];
             const inner = (
               <>
                 <Image
@@ -144,10 +166,29 @@ const OfferBannerGrid = () => {
                   className="w-full h-[140px] sm:h-[160px] md:h-[180px] object-cover group-hover:scale-110 transition duration-500"
                 />
 
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center px-2">
+                <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center px-2 pb-1 sm:pb-2">
                   <h3 className="text-white text-base sm:text-lg font-semibold text-center">
                     {item.title}
                   </h3>
+                  {previews.length > 0 ? (
+                    <div className="mt-2 flex max-w-full gap-1.5 overflow-x-auto px-1 py-1 scrollbar-hide">
+                      {previews.map((p) => (
+                        <span
+                          key={p._id}
+                          className="relative h-9 w-9 sm:h-10 sm:w-10 shrink-0 overflow-hidden rounded-md ring-2 ring-white/40"
+                          title={p.name}
+                        >
+                          <Image
+                            src={p.image?.trim() || PREVIEW_IMG_FALLBACK}
+                            alt=""
+                            width={40}
+                            height={40}
+                            className="h-full w-full object-cover"
+                          />
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               </>
             );
@@ -160,8 +201,10 @@ const OfferBannerGrid = () => {
                 viewport={{ once: true }}
                 className="group relative rounded-2xl overflow-hidden cursor-pointer"
               >
-                {item.link?.trim() ? (
-                  <Link href={normalizeStoreHref(item.link)} className="block">
+                {item.link?.trim() ||
+                ((item.curatedSlug || "").trim() &&
+                  (item.productIds?.length ?? 0) > 0) ? (
+                  <Link href={trendingTileHref(item)} className="block">
                     {inner}
                   </Link>
                 ) : (

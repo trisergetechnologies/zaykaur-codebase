@@ -175,7 +175,9 @@ export default function PendingProductsPage() {
                     >
                       <td className="px-3 py-2">
                         <span className="font-medium text-gray-900 dark:text-white">{p.name}</span>
-                        {p.slug && <span className="block text-xs text-gray-500">{p.slug}</span>}
+                        {p.slug && (
+                          <span className="block text-xs text-gray-500">Listing: {p.slug}</span>
+                        )}
                       </td>
                       <td className="px-3 py-2 text-gray-600 dark:text-gray-300 text-xs">{sellerLabel(p)}</td>
                     </tr>

@@ -29,6 +29,10 @@ const bestDealTileSchema = new mongoose.Schema(
     link: { type: String, default: "" },
     gridClass: { type: String, default: "lg:col-span-1 lg:row-span-1" },
     badge: { type: String, default: "" },
+    curatedSlug: { type: String, default: "" },
+    landingTitle: { type: String, default: "" },
+    landingSubtitle: { type: String, default: "" },
+    productIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
   },
   { _id: false }
 );
@@ -38,6 +42,10 @@ const trendingTileSchema = new mongoose.Schema(
     title: { type: String, required: true },
     image: { type: String, required: true },
     link: { type: String, default: "" },
+    curatedSlug: { type: String, default: "" },
+    landingTitle: { type: String, default: "" },
+    landingSubtitle: { type: String, default: "" },
+    productIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
   },
   { _id: false }
 );
@@ -45,6 +53,7 @@ const trendingTileSchema = new mongoose.Schema(
 const homepageContentSchema = new mongoose.Schema(
   {
     key: { type: String, unique: true, default: "main", index: true },
+    featuredProductIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
     heroSlides: { type: [heroSlideSchema], default: [] },
     topCategoryStrip: { type: [topCategoryStripItemSchema], default: [] },
     bestDeals: {

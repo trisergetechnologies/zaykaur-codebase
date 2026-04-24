@@ -10,6 +10,8 @@ const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
   weight: ["300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
+  adjustFontFallback: true,
 });
 
 export const metadata: Metadata = {
@@ -32,14 +34,16 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          "min-h-screen bg-background font-sans antialiased hide-scrollbar",
+          "min-h-screen-safe bg-background font-sans antialiased hide-scrollbar",
           fontSans.variable
         )}
       >
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
+          forcedTheme="light"
           enableSystem={false}
+          storageKey="zaykaur-store-ui"
           disableTransitionOnChange
         >
           {children}

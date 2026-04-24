@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react"; // npm i lucide-react
 import { useHomepageMerchandising } from "@/context/HomepageMerchandisingContext";
+import { bestDealTileHref } from "@/lib/homepageTileHref";
 import { normalizeStoreHref } from "@/lib/normalizeStoreHref";
 
 const defaultDeals = [
@@ -98,7 +99,7 @@ const BestDealsSection = () => {
             viewport={{ once: true }}
             className={`${deal.gridClass} relative min-h-[220px] sm:min-h-[200px] lg:min-h-0 group cursor-pointer overflow-hidden rounded-3xl bg-gray-100`}
           >
-            <Link href={normalizeStoreHref(deal.link)} className="block w-full h-full">
+            <Link href={bestDealTileHref(deal)} className="block w-full h-full">
               {/* Image with Parallax-like hover */}
               <Image
                 src={deal.image}

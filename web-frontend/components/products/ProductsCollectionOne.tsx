@@ -3,34 +3,51 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { Tabs, TabsContent} from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import SingleProductCartView from "../product/SingleProductCartView";
 import ProductCardSkeleton from "../product/ProductCardSkeleton";
 import { apiGet } from "@/lib/api";
 import { normalizeProducts } from "@/lib/normalizeProduct";
 import { Product } from "@/types";
+import { useHomepageMerchandising } from "@/context/HomepageMerchandisingContext";
 
 const SKELETON_COUNT = 10;
 
 const ProductsCollectionOne = () => {
-  const [data, setData] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { payload, loading: homepageLoading } = useHomepageMerchandising();
+  const [fallbackData, setFallbackData] = useState<Product[]>([]);
+  const [fallbackLoading, setFallbackLoading] = useState(true);
+
+  const hasFeatured =
+    Array.isArray(payload?.featuredProducts) && payload.featuredProducts.length > 0;
 
   useEffect(() => {
+    if (homepageLoading) return;
+    if (hasFeatured) {
+      setFallbackLoading(false);
+      return;
+    }
     let cancelled = false;
-    setLoading(true);
+    setFallbackLoading(true);
     apiGet<{ items: any[]; pagination: any }>("/api/v1/public/products?limit=25")
       .then((res) => {
         if (!cancelled && res.success && res.data?.items?.length > 0) {
-          setData(normalizeProducts(res.data.items));
+          setFallbackData(normalizeProducts(res.data.items));
         }
       })
       .catch(() => {})
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setFallbackLoading(false);
       });
-    return () => { cancelled = true; };
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [homepageLoading, hasFeatured]);
+
+  const data = hasFeatured
+    ? normalizeProducts(payload!.featuredProducts as any[])
+    : fallbackData;
+  const loading = homepageLoading || (!hasFeatured && fallbackLoading);
 
   return (
     <section className="max-w-[1600px] mx-auto py-10 sm:py-14 px-3 lg:px-6">

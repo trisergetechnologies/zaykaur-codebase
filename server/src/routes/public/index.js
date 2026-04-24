@@ -3,10 +3,14 @@ import { getAllProducts, getSingleProduct, getProductBySlug } from "../../contro
 import { getCategories } from "../../controllers/categoryController.js";
 import { handleDeliveryWebhook } from "../../controllers/delivery/webhookController.js";
 import { getProductReviews } from "../../controllers/reviewController.js";
-import { getPublicHomepage } from "../../controllers/homepageController.js";
+import {
+  getPublicHomepage,
+  getPublicHomepageCurated,
+} from "../../controllers/homepageController.js";
 
 const router = express.Router();
 
+router.get("/homepage/curated/:slug", getPublicHomepageCurated);
 router.get("/homepage", getPublicHomepage);
 router.get("/products", getAllProducts);
 router.get("/products/single/:productId", getSingleProduct);

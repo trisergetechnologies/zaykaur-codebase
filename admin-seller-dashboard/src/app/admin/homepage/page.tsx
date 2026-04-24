@@ -9,6 +9,7 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import Input from "@/components/form/input/InputField";
 import { apiUrl } from "@/lib/api";
 import { getToken } from "@/helper/tokenHelper";
+import { ProductIdListEditor } from "@/components/admin/homepage/ProductIdListEditor";
 
 type HeroSlide = {
   title: string;
@@ -28,11 +29,24 @@ type BestDealTile = {
   link: string;
   gridClass: string;
   badge: string;
+  curatedSlug: string;
+  landingTitle: string;
+  landingSubtitle: string;
+  productIds: string[];
 };
 
-type TrendingTile = { title: string; image: string; link: string };
+type TrendingTile = {
+  title: string;
+  image: string;
+  link: string;
+  curatedSlug: string;
+  landingTitle: string;
+  landingSubtitle: string;
+  productIds: string[];
+};
 
 type HomepagePayload = {
+  featuredProductIds: string[];
   heroSlides: HeroSlide[];
   topCategoryStrip: StripItem[];
   bestDeals: {
@@ -57,6 +71,7 @@ type HomepagePayload = {
 };
 
 const emptyPayload = (): HomepagePayload => ({
+  featuredProductIds: [],
   heroSlides: [],
   topCategoryStrip: [],
   bestDeals: {
@@ -80,10 +95,10 @@ const emptyPayload = (): HomepagePayload => ({
   },
 });
 
-type TabId = "hero" | "strip" | "bestDeals" | "trending";
+type TabId = "featured" | "hero" | "strip" | "bestDeals" | "trending";
 
 export default function AdminHomepagePage() {
-  const [tab, setTab] = useState<TabId>("hero");
+  const [tab, setTab] = useState<TabId>("featured");
   const [data, setData] = useState<HomepagePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -102,7 +117,41 @@ export default function AdminHomepagePage() {
       .then((res) => {
         const d = res.data?.data;
         if (d && typeof d === "object") {
+          const bestTiles = Array.isArray(d.bestDeals?.tiles)
+            ? d.bestDeals.tiles.map((t: Record<string, unknown>) => ({
+                title: String(t.title ?? ""),
+                subtitle: String(t.subtitle ?? ""),
+                image: String(t.image ?? ""),
+                link: String(t.link ?? ""),
+                gridClass: String(
+                  t.gridClass ?? "lg:col-span-1 lg:row-span-1"
+                ),
+                badge: String(t.badge ?? ""),
+                curatedSlug: String(t.curatedSlug ?? ""),
+                landingTitle: String(t.landingTitle ?? ""),
+                landingSubtitle: String(t.landingSubtitle ?? ""),
+                productIds: Array.isArray(t.productIds)
+                  ? t.productIds.map((id: unknown) => String(id))
+                  : [],
+              }))
+            : [];
+          const trendTiles = Array.isArray(d.trendingFashion?.tiles)
+            ? d.trendingFashion.tiles.map((t: Record<string, unknown>) => ({
+                title: String(t.title ?? ""),
+                image: String(t.image ?? ""),
+                link: String(t.link ?? ""),
+                curatedSlug: String(t.curatedSlug ?? ""),
+                landingTitle: String(t.landingTitle ?? ""),
+                landingSubtitle: String(t.landingSubtitle ?? ""),
+                productIds: Array.isArray(t.productIds)
+                  ? t.productIds.map((id: unknown) => String(id))
+                  : [],
+              }))
+            : [];
           setData({
+            featuredProductIds: Array.isArray(d.featuredProductIds)
+              ? d.featuredProductIds.map((id: unknown) => String(id))
+              : [],
             heroSlides: Array.isArray(d.heroSlides) ? d.heroSlides : [],
             topCategoryStrip: Array.isArray(d.topCategoryStrip)
               ? d.topCategoryStrip
@@ -112,7 +161,7 @@ export default function AdminHomepagePage() {
               sectionTitle: d.bestDeals?.sectionTitle ?? "",
               exploreAllLabel: d.bestDeals?.exploreAllLabel ?? "Explore All Deals",
               exploreAllHref: d.bestDeals?.exploreAllHref ?? "/shop",
-              tiles: Array.isArray(d.bestDeals?.tiles) ? d.bestDeals.tiles : [],
+              tiles: bestTiles,
             },
             trendingFashion: {
               title: d.trendingFashion?.title ?? "",
@@ -124,9 +173,7 @@ export default function AdminHomepagePage() {
                 ctaLabel: d.trendingFashion?.promo?.ctaLabel ?? "",
                 ctaLink: d.trendingFashion?.promo?.ctaLink ?? "",
               },
-              tiles: Array.isArray(d.trendingFashion?.tiles)
-                ? d.trendingFashion.tiles
-                : [],
+              tiles: trendTiles,
             },
           });
         } else {
@@ -153,6 +200,7 @@ export default function AdminHomepagePage() {
     }
     const payload: HomepagePayload = {
       ...data,
+      featuredProductIds: data.featuredProductIds ?? [],
       heroSlides: data.heroSlides.map((s) => ({
         ...s,
         images: s.images.map((u) => u.trim()).filter(Boolean),
@@ -160,7 +208,7 @@ export default function AdminHomepagePage() {
     };
     for (const slide of payload.heroSlides) {
       if (!slide.images?.length) {
-        toast.error("Each hero slide needs at least one image URL");
+        toast.error("Each hero slide needs at least one image");
         return;
       }
     }
@@ -181,6 +229,9 @@ export default function AdminHomepagePage() {
               ? {
                   ...prev,
                   ...d,
+                  featuredProductIds: Array.isArray(d.featuredProductIds)
+                    ? d.featuredProductIds.map((id: unknown) => String(id))
+                    : prev.featuredProductIds,
                   heroSlides: d.heroSlides ?? prev.heroSlides,
                   topCategoryStrip: d.topCategoryStrip ?? prev.topCategoryStrip,
                   bestDeals: d.bestDeals ?? prev.bestDeals,
@@ -204,6 +255,7 @@ export default function AdminHomepagePage() {
   };
 
   const tabs: { id: TabId; label: string }[] = [
+    { id: "featured", label: "Featured products" },
     { id: "hero", label: "Hero banner" },
     { id: "strip", label: "Top categories" },
     { id: "bestDeals", label: "Best deals" },
@@ -225,9 +277,10 @@ export default function AdminHomepagePage() {
 
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-gray-600 dark:text-gray-400 max-w-2xl">
-          Edit storefront homepage sections. Image fields accept full URLs or site paths
-          (e.g. /strip/saree.png). Hero and product links can be relative paths like{" "}
-          <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">/shop?category=fashion</code>.
+          Choose what shoppers see on your store homepage: featured products, rotating banners,
+          top categories, and promotional tiles. You can send people to a normal shop link, or—if
+          you add a short page name and pick products—to a dedicated page for that group. Use full
+          picture addresses or site paths such as /strip/saree.png.
         </p>
         <button
           type="button"
@@ -255,6 +308,22 @@ export default function AdminHomepagePage() {
           </button>
         ))}
       </div>
+
+      {tab === "featured" && (
+        <ComponentCard title="Featured products">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Pick up to 30 products in the order you want them to appear. Leave this empty to use
+            the store’s usual product list.
+          </p>
+          <ProductIdListEditor
+            ids={data.featuredProductIds ?? []}
+            max={30}
+            onChange={(next) =>
+              setData((d) => (d ? { ...d, featuredProductIds: next } : d))
+            }
+          />
+        </ComponentCard>
+      )}
 
       {tab === "hero" && (
         <div className="space-y-6">
@@ -349,7 +418,7 @@ export default function AdminHomepagePage() {
                 </div>
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                    CTA link (href)
+                    Button destination
                   </label>
                   <Input
                     value={slide.link}
@@ -370,7 +439,7 @@ export default function AdminHomepagePage() {
                 </div>
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                    Image URLs (first is shown; add more for carousel if supported)
+                    Images (first one is shown on the banner)
                   </label>
                   {(slide.images.length ? slide.images : [""]).map((img, k) => (
                     <div key={k} className="mb-2 flex gap-2">
@@ -421,7 +490,7 @@ export default function AdminHomepagePage() {
                       });
                     }}
                   >
-                    + Add image URL
+                    + Add another image
                   </button>
                 </div>
               </div>
@@ -541,7 +610,9 @@ export default function AdminHomepagePage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-600">Slug</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                    Link name
+                  </label>
                   <Input
                     value={row.slug}
                     onChange={(e) => {
@@ -558,9 +629,13 @@ export default function AdminHomepagePage() {
                       );
                     }}
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Short name for the shop link: lowercase, use hyphens instead of spaces (example:
+                    ethnic-wear).
+                  </p>
                 </div>
                 <div className="md:col-span-3">
-                  <label className="mb-1 block text-xs font-medium text-gray-600">Image URL</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">Image</label>
                   <Input
                     value={row.image}
                     onChange={(e) => {
@@ -668,7 +743,9 @@ export default function AdminHomepagePage() {
           <ComponentCard title="Section header">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600">Eyebrow</label>
+                <label className="mb-1 block text-xs font-medium text-gray-600">
+                  Small label above title
+                </label>
                 <Input
                   value={data.bestDeals.sectionEyebrow}
                   onChange={(e) =>
@@ -785,7 +862,7 @@ export default function AdminHomepagePage() {
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="mb-1 block text-xs font-medium text-gray-600">Image URL</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">Image</label>
                   <Input
                     value={tile.image}
                     onChange={(e) => {
@@ -807,7 +884,9 @@ export default function AdminHomepagePage() {
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="mb-1 block text-xs font-medium text-gray-600">Link (href)</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                    Where the tile goes
+                  </label>
                   <Input
                     value={tile.link}
                     onChange={(e) => {
@@ -827,10 +906,107 @@ export default function AdminHomepagePage() {
                       );
                     }}
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    If you add a collection name and products below, shoppers open that collection
+                    page instead of this link.
+                  </p>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                    Collection page name
+                  </label>
+                  <Input
+                    value={tile.curatedSlug}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setData((d) =>
+                        d
+                          ? {
+                              ...d,
+                              bestDeals: {
+                                ...d.bestDeals,
+                                tiles: d.bestDeals.tiles.map((t, j) =>
+                                  j === i ? { ...t, curatedSlug: v } : t
+                                ),
+                              },
+                            }
+                          : d
+                      );
+                    }}
+                    hint="Lowercase letters and hyphens only. Must be different for each tile. Example: summer-sale"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                    Big heading on collection page (optional)
+                  </label>
+                  <Input
+                    value={tile.landingTitle}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setData((d) =>
+                        d
+                          ? {
+                              ...d,
+                              bestDeals: {
+                                ...d.bestDeals,
+                                tiles: d.bestDeals.tiles.map((t, j) =>
+                                  j === i ? { ...t, landingTitle: v } : t
+                                ),
+                              },
+                            }
+                          : d
+                      );
+                    }}
+                  />
                 </div>
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-xs font-medium text-gray-600">
-                    Grid CSS classes (Tailwind)
+                    Supporting text on collection page (optional)
+                  </label>
+                  <Input
+                    value={tile.landingSubtitle}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setData((d) =>
+                        d
+                          ? {
+                              ...d,
+                              bestDeals: {
+                                ...d.bestDeals,
+                                tiles: d.bestDeals.tiles.map((t, j) =>
+                                  j === i ? { ...t, landingSubtitle: v } : t
+                                ),
+                              },
+                            }
+                          : d
+                      );
+                    }}
+                  />
+                </div>
+                <ProductIdListEditor
+                  ids={tile.productIds ?? []}
+                  max={48}
+                  title="Products to show on that page"
+                  onChange={(next) =>
+                    setData((d) =>
+                      d
+                        ? {
+                            ...d,
+                            bestDeals: {
+                              ...d.bestDeals,
+                              tiles: d.bestDeals.tiles.map((t, j) =>
+                                j === i ? { ...t, productIds: next } : t
+                              ),
+                            },
+                          }
+                        : d
+                    )
+                  }
+                />
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                    Tile size on large screens (optional)
                   </label>
                   <Input
                     value={tile.gridClass}
@@ -850,7 +1026,7 @@ export default function AdminHomepagePage() {
                           : d
                       );
                     }}
-                    hint="e.g. lg:col-span-2 lg:row-span-2"
+                    hint="Leave the default unless you were given a custom layout code. Example for a large tile: lg:col-span-2 lg:row-span-2"
                   />
                 </div>
                 <div>
@@ -966,6 +1142,10 @@ export default function AdminHomepagePage() {
                             link: "/shop",
                             gridClass: "lg:col-span-1 lg:row-span-1",
                             badge: "",
+                            curatedSlug: "",
+                            landingTitle: "",
+                            landingSubtitle: "",
+                            productIds: [],
                           },
                         ],
                       },
@@ -1029,7 +1209,7 @@ export default function AdminHomepagePage() {
           <ComponentCard title="Left promo block">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
-                <label className="mb-1 block text-xs font-medium text-gray-600">Background image URL</label>
+                <label className="mb-1 block text-xs font-medium text-gray-600">Background image</label>
                 <Input
                   value={data.trendingFashion.promo.image}
                   onChange={(e) =>
@@ -1067,7 +1247,7 @@ export default function AdminHomepagePage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600">CTA label</label>
+                <label className="mb-1 block text-xs font-medium text-gray-600">Button text</label>
                 <Input
                   value={data.trendingFashion.promo.ctaLabel}
                   onChange={(e) =>
@@ -1108,7 +1288,7 @@ export default function AdminHomepagePage() {
               </div>
               <div className="md:col-span-2">
                 <label className="mb-1 block text-xs font-medium text-gray-600">
-                  CTA link (optional — wraps button)
+                  Where the button goes (optional)
                 </label>
                 <Input
                   value={data.trendingFashion.promo.ctaLink}
@@ -1131,7 +1311,7 @@ export default function AdminHomepagePage() {
           </ComponentCard>
 
           {data.trendingFashion.tiles.map((tile, i) => (
-            <ComponentCard key={i} title={`Small tile ${i + 1}`}>
+            <ComponentCard key={i} title={`Tile ${i + 1}`}>
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs font-medium text-gray-600">Title</label>
@@ -1156,7 +1336,7 @@ export default function AdminHomepagePage() {
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="mb-1 block text-xs font-medium text-gray-600">Image URL</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">Image</label>
                   <Input
                     value={tile.image}
                     onChange={(e) => {
@@ -1178,7 +1358,9 @@ export default function AdminHomepagePage() {
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="mb-1 block text-xs font-medium text-gray-600">Link (href)</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                    Where the tile goes
+                  </label>
                   <Input
                     value={tile.link}
                     onChange={(e) => {
@@ -1198,7 +1380,104 @@ export default function AdminHomepagePage() {
                       );
                     }}
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    If you add a collection name and products below, shoppers open that collection
+                    page instead of this link.
+                  </p>
                 </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                    Collection page name
+                  </label>
+                  <Input
+                    value={tile.curatedSlug}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setData((d) =>
+                        d
+                          ? {
+                              ...d,
+                              trendingFashion: {
+                                ...d.trendingFashion,
+                                tiles: d.trendingFashion.tiles.map((t, j) =>
+                                  j === i ? { ...t, curatedSlug: v } : t
+                                ),
+                              },
+                            }
+                          : d
+                      );
+                    }}
+                    hint="Lowercase letters and hyphens only. Use a different name for each tile. Example: budget-picks"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                    Big heading on collection page (optional)
+                  </label>
+                  <Input
+                    value={tile.landingTitle}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setData((d) =>
+                        d
+                          ? {
+                              ...d,
+                              trendingFashion: {
+                                ...d.trendingFashion,
+                                tiles: d.trendingFashion.tiles.map((t, j) =>
+                                  j === i ? { ...t, landingTitle: v } : t
+                                ),
+                              },
+                            }
+                          : d
+                      );
+                    }}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                    Supporting text on collection page (optional)
+                  </label>
+                  <Input
+                    value={tile.landingSubtitle}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setData((d) =>
+                        d
+                          ? {
+                              ...d,
+                              trendingFashion: {
+                                ...d.trendingFashion,
+                                tiles: d.trendingFashion.tiles.map((t, j) =>
+                                  j === i ? { ...t, landingSubtitle: v } : t
+                                ),
+                              },
+                            }
+                          : d
+                      );
+                    }}
+                  />
+                </div>
+                <ProductIdListEditor
+                  ids={tile.productIds ?? []}
+                  max={48}
+                  title="Products to show on that page"
+                  onChange={(next) =>
+                    setData((d) =>
+                      d
+                        ? {
+                            ...d,
+                            trendingFashion: {
+                              ...d.trendingFashion,
+                              tiles: d.trendingFashion.tiles.map((t, j) =>
+                                j === i ? { ...t, productIds: next } : t
+                              ),
+                            },
+                          }
+                        : d
+                    )
+                  }
+                />
               </div>
               <div className="flex gap-2">
                 <button
@@ -1283,7 +1562,15 @@ export default function AdminHomepagePage() {
                         ...d.trendingFashion,
                         tiles: [
                           ...d.trendingFashion.tiles,
-                          { title: "", image: "", link: "" },
+                          {
+                            title: "",
+                            image: "",
+                            link: "",
+                            curatedSlug: "",
+                            landingTitle: "",
+                            landingSubtitle: "",
+                            productIds: [],
+                          },
                         ],
                       },
                     }
