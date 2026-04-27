@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import SingleProductCartView from "../product/SingleProductCartView";
-import ProductCardSkeleton from "../product/ProductCardSkeleton";
+import { useHomepageMerchandising } from "@/context/HomepageMerchandisingContext";
 import { apiGet } from "@/lib/api";
 import { normalizeProducts } from "@/lib/normalizeProduct";
 import { Product } from "@/types";
-import { useHomepageMerchandising } from "@/context/HomepageMerchandisingContext";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import ProductCardSkeleton from "../product/ProductCardSkeleton";
+import SingleProductCartView from "../product/SingleProductCartView";
 
 const SKELETON_COUNT = 10;
 
@@ -51,20 +51,20 @@ const ProductsCollectionOne = () => {
   const loading = homepageLoading || (!hasFeatured && fallbackLoading);
 
   const productsGridClassName =
-    "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-5 sm:gap-x-6 sm:gap-y-7 md:gap-x-10 md:gap-y-8 lg:gap-x-12";
+    "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-2.5 gap-y-3.5 sm:gap-x-6 sm:gap-y-7 md:gap-x-10 md:gap-y-8 lg:gap-x-12";
 
   return (
-    <section className="max-w-[1600px] mx-auto py-10 sm:py-14 px-3 lg:px-6">
-      <div className="zk-premium-surface rounded-3xl border border-slate-100/80 p-4 sm:p-6 lg:p-8">
+    <section className="max-w-[1600px] mx-auto py-7 sm:py-14 px-3 lg:px-6">
+      <div className="zk-premium-surface rounded-3xl border border-slate-100/80 p-3 sm:p-6 lg:p-8">
 
       <Tabs defaultValue="top-rated" className="w-full">
 
         {/* HEADER */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-9 gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 sm:mb-9 gap-3 sm:gap-4">
 
           <div className="flex items-center gap-6">
 
-            <h2 className="text-2xl md:text-[2rem] font-extrabold tracking-tight text-slate-900">
+            <h2 className="text-[1.85rem] sm:text-2xl md:text-[2rem] font-extrabold tracking-tight text-slate-900">
               Featured Products
             </h2>
 

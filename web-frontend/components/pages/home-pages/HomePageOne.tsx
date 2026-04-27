@@ -20,13 +20,13 @@ const HomePageOne = () => {
         <Suspense fallback={<Loader />}>
           <CategoriesCollection />
         </Suspense>
-        <LazySection height="300px" rootMargin="300px">
+        <LazySection height="240px" rootMargin="260px">
           <OfferBannerGrid />
         </LazySection>
-        <LazySection height="600px" rootMargin="200px">
+        <LazySection height="520px" rootMargin="200px">
           <ProductsCollectionOne />
         </LazySection>
-        <LazySection height="380px" rootMargin="240px">
+        <LazySection height="300px" rootMargin="220px">
           <ShopByCategoryGrid />
         </LazySection>
       </section>

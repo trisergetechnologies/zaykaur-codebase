@@ -93,17 +93,113 @@ const OfferBannerGrid = () => {
       : (defaultCategories as TrendingCard[]);
 
   return (
-    <section className="max-w-[1600px] mx-auto px-3 sm:px-4 py-10 sm:py-14">
+    <section className="max-w-[1600px] mx-auto px-3 sm:px-4 py-7 sm:py-14">
 
       {/* SECTION HEADER */}
-      <div className="mb-6 sm:mb-10">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+      <div className="mb-4 sm:mb-10">
+        <h2 className="text-[1.38rem] sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
           {sectionTitle}
         </h2>
 
-        <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm md:text-base max-w-lg">
+        <p className="text-gray-500 dark:text-gray-400 mt-1.5 sm:mt-2 text-sm md:text-base max-w-lg">
           {sectionSubtitle}
         </p>
+      </div>
+
+      {/* Mobile promo + rail */}
+      <div className="lg:hidden space-y-3">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          viewport={{ once: true }}
+          className="relative h-[150px] rounded-2xl overflow-hidden"
+        >
+          <Image
+            src={promo.image}
+            alt={promo.title}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority={false}
+          />
+          <div className="absolute inset-0 bg-black/40 flex flex-col justify-end p-3 text-white">
+            <h2 className="text-lg font-extrabold leading-tight">{promo.title}</h2>
+            <p className="text-xs text-gray-100 mt-1 line-clamp-2">{promo.body}</p>
+            {promo.ctaLink ? (
+              <Link
+                href={normalizeStoreHref(promo.ctaLink)}
+                className="mt-2 inline-flex items-center justify-center rounded-full bg-white text-black px-3 py-1.5 text-[11px] font-semibold min-h-[32px] w-fit"
+              >
+                {promo.ctaLabel}
+              </Link>
+            ) : null}
+          </div>
+        </motion.div>
+
+        <div className="grid grid-cols-2 gap-2.5">
+          {categories.map((item, index) => {
+            const previews = item.previewProducts?.filter((p) => p._id) ?? [];
+            const inner = (
+              <>
+                <Image
+                  src={item.image}
+                  alt={item.title}
+                  width={400}
+                  height={300}
+                  className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent flex flex-col items-center justify-end px-2.5 pb-2.5">
+                  <h3
+                    className="text-white text-sm font-extrabold text-center leading-tight"
+                    style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}
+                  >
+                    {item.title}
+                  </h3>
+                  {previews.length > 0 ? (
+                    <div className="mt-1.5 flex max-w-full gap-1 overflow-x-auto px-1 py-1 scrollbar-hide">
+                      {previews.slice(0, 4).map((p) => (
+                        <span
+                          key={p._id}
+                          className="relative h-7 w-7 shrink-0 overflow-hidden rounded-md ring-2 ring-white/45"
+                          title={p.name}
+                        >
+                          <Image
+                            src={p.image?.trim() || PREVIEW_IMG_FALLBACK}
+                            alt=""
+                            width={28}
+                            height={28}
+                            className="h-full w-full object-cover"
+                          />
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </>
+            );
+            return (
+              <motion.div
+                key={`mobile-${item.title}-${index}`}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.06 }}
+                viewport={{ once: true }}
+                className="h-[132px] group relative rounded-2xl overflow-hidden cursor-pointer"
+              >
+                {item.link?.trim() ||
+                ((item.curatedSlug || "").trim() &&
+                  (item.productIds?.length ?? 0) > 0) ? (
+                  <Link href={trendingTileHref(item)} className="block h-full">
+                    {inner}
+                  </Link>
+                ) : (
+                  inner
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-5 gap-4 sm:gap-6">
@@ -114,7 +210,7 @@ const OfferBannerGrid = () => {
           whileInView={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="lg:col-span-2 relative h-[260px] sm:h-[300px] md:h-[360px] lg:h-[min(500px,52vh)] lg:min-h-[360px] rounded-2xl overflow-hidden"
+          className="hidden lg:block lg:col-span-2 relative h-[260px] sm:h-[300px] md:h-[360px] lg:h-[min(500px,52vh)] lg:min-h-[360px] rounded-2xl overflow-hidden"
         >
           <Image
             src={promo.image}
@@ -153,7 +249,7 @@ const OfferBannerGrid = () => {
         </motion.div>
 
         {/* CATEGORY CARDS */}
-        <div className="lg:col-span-3 grid sm:grid-cols-2 gap-4 sm:gap-6">
+        <div className="hidden lg:grid lg:col-span-3 sm:grid-cols-2 gap-4 sm:gap-6">
           {categories.map((item, index) => {
             const previews = item.previewProducts?.filter((p) => p._id) ?? [];
             const inner = (

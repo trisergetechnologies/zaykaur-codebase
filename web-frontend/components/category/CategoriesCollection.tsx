@@ -68,12 +68,12 @@ const BestDealsSection = () => {
   const exploreHref = normalizeStoreHref(bd?.exploreAllHref || "/shop");
 
   return (
-    <section className="max-w-[1400px] mx-auto px-3 sm:px-6 py-12 sm:py-20">
+    <section className="max-w-[1400px] mx-auto px-3 sm:px-6 py-7 sm:py-20">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 gap-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-4 sm:mb-12 gap-2.5 sm:gap-4">
         <div>
-          <span className="text-pink-600 font-bold tracking-widest uppercase text-sm">{sectionEyebrow}</span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 dark:text-white mt-2 italic">
+          <span className="text-pink-600 font-bold tracking-[0.18em] uppercase text-[11px] sm:text-sm">{sectionEyebrow}</span>
+          <h2 className="text-[1.38rem] sm:text-4xl md:text-5xl font-black text-gray-900 dark:text-white mt-1 sm:mt-2 italic">
             {sectionTitle}
             <span className="text-pink-600">.</span>
           </h2>
@@ -81,15 +81,60 @@ const BestDealsSection = () => {
 
         <Link
           href={exploreHref}
-          className="group flex items-center gap-2 text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 hover:text-pink-600 transition-colors shrink-0"
+          className="group hidden sm:flex items-center gap-2 text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 hover:text-pink-600 transition-colors shrink-0"
         >
           {exploreLabel}
           <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
         </Link>
       </div>
 
+      {/* Mobile compact grid (no sliding) */}
+      <div className="sm:hidden grid grid-cols-2 gap-2.5">
+        {deals.map((deal, index) => (
+          <motion.div
+            key={`mobile-${index}`}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: index * 0.06 }}
+            viewport={{ once: true }}
+            className="relative h-[148px] group cursor-pointer overflow-hidden rounded-2xl bg-gray-100"
+          >
+            <Link href={bestDealTileHref(deal)} className="block w-full h-full">
+              <Image
+                src={deal.image}
+                alt={deal.title}
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              {deal.badge && (
+                <div className="absolute top-2.5 left-2.5 z-20">
+                  <span className="bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider shadow-sm">
+                    {deal.badge}
+                  </span>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/45 to-transparent" />
+              <div className="absolute bottom-0 left-0 p-2.5 w-full">
+                <p
+                  className="text-pink-300 text-[9px] font-bold uppercase mb-0.5 tracking-[0.12em] line-clamp-1"
+                  style={{ textShadow: "0 1px 2px rgba(0,0,0,0.65)" }}
+                >
+                  {deal.subtitle}
+                </p>
+                <h3
+                  className="text-[15px] font-extrabold text-white leading-tight line-clamp-2"
+                  style={{ textShadow: "0 1px 2px rgba(0,0,0,0.75)" }}
+                >
+                  {deal.title}
+                </h3>
+              </div>
+            </Link>
+          </motion.div>
+        ))}
+      </div>
+
       {/* Grid Layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-4 h-auto lg:h-[700px]">
+      <div className="hidden sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-4 h-auto lg:h-[700px]">
         {deals.map((deal, index) => (
           <motion.div
             key={index}

@@ -189,6 +189,19 @@ html, body {
   scrollbar-width: none;
 }
 
+.mobile-scroll-row {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.mobile-scroll-row::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-snap-card {
+  scroll-snap-align: start;
+}
+
 @layer components {
   .zk-card {
     border: 1px solid rgba(226, 232, 240, 0.6);
