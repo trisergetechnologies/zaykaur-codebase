@@ -19,7 +19,8 @@ const ProductsCollectionOne = () => {
   const [fallbackLoading, setFallbackLoading] = useState(true);
 
   const hasFeatured =
-    Array.isArray(payload?.featuredProducts) && payload.featuredProducts.length > 0;
+    Array.isArray(payload?.featuredProducts) &&
+    (payload?.featuredProducts?.length ?? 0) > 0;
 
   useEffect(() => {
     if (homepageLoading) return;
@@ -48,6 +49,9 @@ const ProductsCollectionOne = () => {
     ? normalizeProducts(payload!.featuredProducts as any[])
     : fallbackData;
   const loading = homepageLoading || (!hasFeatured && fallbackLoading);
+
+  const productsGridClassName =
+    "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-5 sm:gap-x-6 sm:gap-y-7 md:gap-x-10 md:gap-y-8 lg:gap-x-12";
 
   return (
     <section className="max-w-[1600px] mx-auto py-10 sm:py-14 px-3 lg:px-6">
@@ -82,13 +86,13 @@ const ProductsCollectionOne = () => {
         {/* TOP RATED */}
         <TabsContent value="top-rated">
           {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-5 sm:gap-x-4 sm:gap-y-7 md:gap-x-5 md:gap-y-8">
+            <div className={productsGridClassName}>
               {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
                 <ProductCardSkeleton key={i} />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-5 sm:gap-x-4 sm:gap-y-7 md:gap-x-5 md:gap-y-8">
+            <div className={productsGridClassName}>
               {data.slice(0, 25).map((product, index) => (
                 <SingleProductCartView key={product.id} product={product} index={index} />
               ))}
@@ -98,7 +102,7 @@ const ProductsCollectionOne = () => {
 
         {/* MOST POPULAR */}
         <TabsContent value="most-popular">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-5 sm:gap-x-4 sm:gap-y-7 md:gap-x-5 md:gap-y-8">
+          <div className={productsGridClassName}>
             {data.slice(0, 25).map((product, index) => (
               <SingleProductCartView key={product.id} product={product} index={index} />
             ))}
@@ -107,7 +111,7 @@ const ProductsCollectionOne = () => {
 
         {/* NEW ARRIVALS */}
         <TabsContent value="new-items">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-5 sm:gap-x-4 sm:gap-y-7 md:gap-x-5 md:gap-y-8">
+          <div className={productsGridClassName}>
             {data.slice(0, 25).map((product, index) => (
               <SingleProductCartView key={product.id} product={product} index={index} />
             ))}
