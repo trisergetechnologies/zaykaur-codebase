@@ -44,6 +44,7 @@ function toPublicPayload(doc) {
     topCategoryStrip: o.topCategoryStrip ?? [],
     bestDeals: o.bestDeals ?? {},
     trendingFashion: o.trendingFashion ?? {},
+    shopByCategory: o.shopByCategory ?? {},
     updatedAt: o.updatedAt ?? null,
   };
 }
@@ -57,6 +58,39 @@ function normalizeTilesForPersist(tiles) {
     landingSubtitle: t.landingSubtitle != null ? String(t.landingSubtitle) : "",
     productIds: Array.isArray(t.productIds) ? t.productIds : [],
   }));
+}
+
+function normalizeShopByCategoryCards(cards) {
+  if (!Array.isArray(cards)) return [];
+  const pickCategoryFromLink = (link) => {
+    const raw = link != null ? String(link) : "";
+    const match = raw.match(/[?&]category=([^&]+)/i);
+    if (!match?.[1]) return "";
+    try {
+      return decodeURIComponent(match[1]).trim().toLowerCase();
+    } catch {
+      return String(match[1]).trim().toLowerCase();
+    }
+  };
+  return cards.map((card) => {
+    const min = Number(card.discountMin);
+    const max = Number(card.discountMax);
+    const fallbackSlug = pickCategoryFromLink(card.link);
+    return {
+      categorySlug:
+        card.categorySlug != null ? String(card.categorySlug).trim().toLowerCase() : fallbackSlug,
+      categoryName:
+        card.categoryName != null
+          ? String(card.categoryName).trim()
+          : card.title != null
+            ? String(card.title).trim()
+            : "",
+      image: card.image != null ? String(card.image) : "",
+      discountMin: Number.isFinite(min) ? min : 0,
+      discountMax: Number.isFinite(max) ? max : 0,
+      ctaText: card.ctaText != null ? String(card.ctaText) : "Shop Now",
+    };
+  });
 }
 
 export const getPublicHomepage = async (req, res) => {
@@ -189,6 +223,7 @@ export const putAdminHomepage = async (req, res) => {
     const body = req.body;
     const bestDealsTiles = normalizeTilesForPersist(body.bestDeals?.tiles);
     const trendingTiles = normalizeTilesForPersist(body.trendingFashion?.tiles);
+    const shopByCategoryCards = normalizeShopByCategoryCards(body.shopByCategory?.cards);
 
     const doc = await HomepageContent.findOneAndUpdate(
       { key: "main" },
@@ -205,6 +240,10 @@ export const putAdminHomepage = async (req, res) => {
           trendingFashion: {
             ...body.trendingFashion,
             tiles: trendingTiles,
+          },
+          shopByCategory: {
+            ...body.shopByCategory,
+            cards: shopByCategoryCards,
           },
           updatedBy: req.user?._id,
         },

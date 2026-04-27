@@ -45,6 +45,15 @@ export type HomepageTrendingTile = {
   previewProducts?: HomepageTrendingTilePreview[];
 };
 
+export type HomepageShopByCategoryCard = {
+  categorySlug: string;
+  categoryName: string;
+  image: string;
+  discountMin: number;
+  discountMax: number;
+  ctaText?: string;
+};
+
 export type HomepagePayload = {
   heroSlides: HomepageHeroSlide[];
   topCategoryStrip: HomepageStripItem[];
@@ -66,6 +75,10 @@ export type HomepagePayload = {
       ctaLink?: string;
     };
     tiles: HomepageTrendingTile[];
+  };
+  shopByCategory: {
+    sectionTitle: string;
+    cards: HomepageShopByCategoryCard[];
   };
   /** Raw API products when admin configured featured IDs (use normalizeProducts). */
   featuredProducts?: unknown[];

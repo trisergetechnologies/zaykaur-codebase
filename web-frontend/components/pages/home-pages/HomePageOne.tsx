@@ -9,6 +9,7 @@ import TopCategoryStrip from "@/components/category/TopCategoryStrip";
 
 import OfferBannerGrid from "@/components/banners/OfferBannerGrid";
 import { HomepageMerchandisingProvider } from "@/context/HomepageMerchandisingContext";
+import ShopByCategoryGrid from "@/components/category/ShopByCategoryGrid";
 
 const HomePageOne = () => {
   return (
@@ -24,6 +25,9 @@ const HomePageOne = () => {
         </LazySection>
         <LazySection height="600px" rootMargin="200px">
           <ProductsCollectionOne />
+        </LazySection>
+        <LazySection height="380px" rootMargin="240px">
+          <ShopByCategoryGrid />
         </LazySection>
       </section>
     </HomepageMerchandisingProvider>

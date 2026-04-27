@@ -54,6 +54,32 @@ function isValidTrendingTiles(tiles) {
   );
 }
 
+function isValidShopByCategoryCards(cards) {
+  const categoryFromLink = (link) => {
+    const raw = link != null ? String(link) : "";
+    const match = raw.match(/[?&]category=([^&]+)/i);
+    if (!match?.[1]) return "";
+    try {
+      return decodeURIComponent(match[1]).trim().toLowerCase();
+    } catch {
+      return String(match[1]).trim().toLowerCase();
+    }
+  };
+  return (
+    Array.isArray(cards) &&
+    cards.length > 0 &&
+    cards.every((x) => {
+      if (!x || !t(x.image)) return false;
+      const categorySlug = t(x.categorySlug) || categoryFromLink(x.link);
+      const categoryName = t(x.categoryName) || t(x.title);
+      if (!categorySlug || !categoryName) return false;
+      const min = Number(x.discountMin);
+      const max = Number(x.discountMax);
+      return Number.isFinite(min) && Number.isFinite(max) && min >= 0 && max <= 100 && min <= max;
+    })
+  );
+}
+
 /**
  * Public storefront: any section that is missing, empty, or invalid falls back
  * to bundled defaults (same as original static homepage).
@@ -105,6 +131,33 @@ export function mergeHomepageForPublic(saved) {
     };
   }
 
+  let shopByCategory = defaults.shopByCategory;
+  if (isValidShopByCategoryCards(o.shopByCategory?.cards)) {
+    const d = defaults.shopByCategory;
+    const categoryFromLink = (link) => {
+      const raw = link != null ? String(link) : "";
+      const match = raw.match(/[?&]category=([^&]+)/i);
+      if (!match?.[1]) return "";
+      try {
+        return decodeURIComponent(match[1]).trim().toLowerCase();
+      } catch {
+        return String(match[1]).trim().toLowerCase();
+      }
+    };
+    const cards = o.shopByCategory.cards.map((card) => ({
+      categorySlug: t(card.categorySlug) || categoryFromLink(card.link),
+      categoryName: t(card.categoryName) || t(card.title),
+      image: t(card.image),
+      discountMin: Number(card.discountMin),
+      discountMax: Number(card.discountMax),
+      ctaText: t(card.ctaText) || "Shop Now",
+    }));
+    shopByCategory = {
+      sectionTitle: t(o.shopByCategory?.sectionTitle) || d.sectionTitle,
+      cards,
+    };
+  }
+
   const featuredProductIds = normalizeFeaturedProductIds(o.featuredProductIds);
 
   return {
@@ -113,6 +166,7 @@ export function mergeHomepageForPublic(saved) {
     topCategoryStrip,
     bestDeals,
     trendingFashion,
+    shopByCategory,
     updatedAt: o.updatedAt ?? null,
   };
 }

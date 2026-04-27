@@ -69,6 +69,65 @@ export const getAllProducts = async (req, res) => {
       if (req.query.maxPrice != null) query["variants.price"].$lte = Number(req.query.maxPrice);
     }
 
+    const discountMinRaw = req.query.discountMin;
+    const discountMaxRaw = req.query.discountMax;
+    if (discountMinRaw != null || discountMaxRaw != null) {
+      const min = Number(discountMinRaw ?? 0);
+      const max = Number(discountMaxRaw ?? 100);
+      const safeMin = Number.isFinite(min) ? min : 0;
+      const safeMax = Number.isFinite(max) ? max : 100;
+      query.$expr = {
+        $gt: [
+          {
+            $size: {
+              $filter: {
+                input: "$variants",
+                as: "v",
+                cond: {
+                  $and: [
+                    { $gt: ["$$v.mrp", 0] },
+                    {
+                      $gte: [
+                        {
+                          $multiply: [
+                            {
+                              $divide: [
+                                { $subtract: ["$$v.mrp", "$$v.price"] },
+                                "$$v.mrp",
+                              ],
+                            },
+                            100,
+                          ],
+                        },
+                        safeMin,
+                      ],
+                    },
+                    {
+                      $lte: [
+                        {
+                          $multiply: [
+                            {
+                              $divide: [
+                                { $subtract: ["$$v.mrp", "$$v.price"] },
+                                "$$v.mrp",
+                              ],
+                            },
+                            100,
+                          ],
+                        },
+                        safeMax,
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          0,
+        ],
+      };
+    }
+
     let sort = { createdAt: -1 };
     if (req.query.sort === "price_asc") sort = { "variants.0.price": 1 };
     if (req.query.sort === "price_desc") sort = { "variants.0.price": -1 };

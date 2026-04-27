@@ -50,6 +50,18 @@ const trendingTileSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const shopByCategoryCardSchema = new mongoose.Schema(
+  {
+    categorySlug: { type: String, required: true },
+    categoryName: { type: String, required: true },
+    image: { type: String, required: true },
+    discountMin: { type: Number, min: 0, max: 100, required: true },
+    discountMax: { type: Number, min: 0, max: 100, required: true },
+    ctaText: { type: String, default: "Shop Now" },
+  },
+  { _id: false }
+);
+
 const homepageContentSchema = new mongoose.Schema(
   {
     key: { type: String, unique: true, default: "main", index: true },
@@ -74,6 +86,10 @@ const homepageContentSchema = new mongoose.Schema(
         ctaLink: { type: String, default: "" },
       },
       tiles: { type: [trendingTileSchema], default: [] },
+    },
+    shopByCategory: {
+      sectionTitle: { type: String, default: "SHOP BY CATEGORY" },
+      cards: { type: [shopByCategoryCardSchema], default: [] },
     },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },

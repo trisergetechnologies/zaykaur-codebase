@@ -52,6 +52,20 @@ const promoSchema = z.object({
   ctaLink: z.string().default(""),
 });
 
+const shopByCategoryCardSchema = z
+  .object({
+    categorySlug: z.string().min(1),
+    categoryName: z.string().min(1),
+    image: z.string().min(1),
+    discountMin: z.number().int().min(0).max(100),
+    discountMax: z.number().int().min(0).max(100),
+    ctaText: z.string().default("Shop Now"),
+  })
+  .refine((card) => card.discountMin <= card.discountMax, {
+    message: "Minimum discount must be less than or equal to maximum discount",
+    path: ["discountMin"],
+  });
+
 export const homepagePutSchema = z
   .object({
     featuredProductIds: z.array(mongoId).max(30).default([]),
@@ -69,6 +83,10 @@ export const homepagePutSchema = z
       subtitle: z.string(),
       promo: promoSchema,
       tiles: z.array(trendingTileSchema).min(1),
+    }),
+    shopByCategory: z.object({
+      sectionTitle: z.string(),
+      cards: z.array(shopByCategoryCardSchema).min(1),
     }),
   })
   .superRefine((data, ctx) => {

@@ -10,6 +10,7 @@ import Input from "@/components/form/input/InputField";
 import { apiUrl } from "@/lib/api";
 import { getToken } from "@/helper/tokenHelper";
 import { ProductIdListEditor } from "@/components/admin/homepage/ProductIdListEditor";
+import { uploadFile } from "@/lib/upload";
 
 type HeroSlide = {
   title: string;
@@ -45,6 +46,32 @@ type TrendingTile = {
   productIds: string[];
 };
 
+type ShopByCategoryCard = {
+  categorySlug: string;
+  categoryName: string;
+  image: string;
+  discountMin: number;
+  discountMax: number;
+  ctaText: string;
+};
+
+type CategoryOption = {
+  _id: string;
+  name: string;
+  slug: string;
+};
+
+const parseCategoryFromLink = (link: unknown): string => {
+  if (typeof link !== "string") return "";
+  const match = link.match(/[?&]category=([^&]+)/i);
+  if (!match?.[1]) return "";
+  try {
+    return decodeURIComponent(match[1]).trim().toLowerCase();
+  } catch {
+    return String(match[1]).trim().toLowerCase();
+  }
+};
+
 type HomepagePayload = {
   featuredProductIds: string[];
   heroSlides: HeroSlide[];
@@ -67,6 +94,10 @@ type HomepagePayload = {
       ctaLink: string;
     };
     tiles: TrendingTile[];
+  };
+  shopByCategory: {
+    sectionTitle: string;
+    cards: ShopByCategoryCard[];
   };
 };
 
@@ -93,15 +124,27 @@ const emptyPayload = (): HomepagePayload => ({
     },
     tiles: [],
   },
+  shopByCategory: {
+    sectionTitle: "SHOP BY CATEGORY",
+    cards: [],
+  },
 });
 
-type TabId = "featured" | "hero" | "strip" | "bestDeals" | "trending";
+type TabId =
+  | "featured"
+  | "hero"
+  | "strip"
+  | "bestDeals"
+  | "shopByCategory"
+  | "trending";
 
 export default function AdminHomepagePage() {
   const [tab, setTab] = useState<TabId>("featured");
   const [data, setData] = useState<HomepagePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingCardIndex, setUploadingCardIndex] = useState<number | null>(null);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
 
   const fetchContent = useCallback(() => {
     const token = getToken();
@@ -148,6 +191,18 @@ export default function AdminHomepagePage() {
                   : [],
               }))
             : [];
+          const shopCards = Array.isArray(d.shopByCategory?.cards)
+            ? d.shopByCategory.cards.map((card: Record<string, unknown>) => ({
+                categorySlug: String(
+                  card.categorySlug ?? parseCategoryFromLink(card.link)
+                ),
+                categoryName: String(card.categoryName ?? card.title ?? ""),
+                image: String(card.image ?? ""),
+                discountMin: Number(card.discountMin ?? 0),
+                discountMax: Number(card.discountMax ?? 0),
+                ctaText: String(card.ctaText ?? "Shop Now"),
+              }))
+            : [];
           setData({
             featuredProductIds: Array.isArray(d.featuredProductIds)
               ? d.featuredProductIds.map((id: unknown) => String(id))
@@ -175,6 +230,10 @@ export default function AdminHomepagePage() {
               },
               tiles: trendTiles,
             },
+            shopByCategory: {
+              sectionTitle: String(d.shopByCategory?.sectionTitle ?? "SHOP BY CATEGORY"),
+              cards: shopCards,
+            },
           });
         } else {
           setData(emptyPayload());
@@ -191,6 +250,52 @@ export default function AdminHomepagePage() {
     fetchContent();
   }, [fetchContent]);
 
+  useEffect(() => {
+    axios
+      .get(apiUrl("/api/v1/public/categories"))
+      .then((res) => {
+        const list = Array.isArray(res.data?.data) ? res.data.data : [];
+        setCategories(
+          list
+            .map((c: Record<string, unknown>) => ({
+              _id: String(c._id ?? ""),
+              name: String(c.name ?? ""),
+              slug: String(c.slug ?? ""),
+            }))
+            .filter((c: CategoryOption) => c.slug && c.name)
+        );
+      })
+      .catch(() => {
+        setCategories([]);
+      });
+  }, []);
+
+  const handleShopCategoryImageUpload = async (index: number, file: File) => {
+    setUploadingCardIndex(index);
+    try {
+      const url = await uploadFile(file, "categories");
+      setData((d) =>
+        d
+          ? {
+              ...d,
+              shopByCategory: {
+                ...d.shopByCategory,
+                cards: d.shopByCategory.cards.map((card, i) =>
+                  i === index ? { ...card, image: url } : card
+                ),
+              },
+            }
+          : d
+      );
+      toast.success("Image uploaded");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Image upload failed";
+      toast.error(msg);
+    } finally {
+      setUploadingCardIndex(null);
+    }
+  };
+
   const save = async () => {
     if (!data) return;
     const token = getToken();
@@ -205,10 +310,34 @@ export default function AdminHomepagePage() {
         ...s,
         images: s.images.map((u) => u.trim()).filter(Boolean),
       })),
+      shopByCategory: {
+        sectionTitle: data.shopByCategory.sectionTitle.trim() || "SHOP BY CATEGORY",
+        cards: data.shopByCategory.cards.map((card) => ({
+          ...card,
+          categorySlug: card.categorySlug.trim(),
+          categoryName: card.categoryName.trim(),
+          image: card.image.trim(),
+          ctaText: card.ctaText.trim() || "Shop Now",
+          discountMin: Number(card.discountMin),
+          discountMax: Number(card.discountMax),
+        })),
+      },
     };
     for (const slide of payload.heroSlides) {
       if (!slide.images?.length) {
         toast.error("Each hero slide needs at least one image");
+        return;
+      }
+    }
+    for (const card of payload.shopByCategory.cards) {
+      const min = Number(card.discountMin);
+      const max = Number(card.discountMax);
+      if (!card.categorySlug || !card.categoryName || !card.image || !Number.isFinite(min) || !Number.isFinite(max)) {
+        toast.error("Each Shop by category card needs category, image, and valid discount values");
+        return;
+      }
+      if (min < 0 || max > 100 || min > max) {
+        toast.error("Discount range must be between 0 and 100, with min less than or equal to max");
         return;
       }
     }
@@ -235,6 +364,7 @@ export default function AdminHomepagePage() {
                   heroSlides: d.heroSlides ?? prev.heroSlides,
                   topCategoryStrip: d.topCategoryStrip ?? prev.topCategoryStrip,
                   bestDeals: d.bestDeals ?? prev.bestDeals,
+                  shopByCategory: d.shopByCategory ?? prev.shopByCategory,
                   trendingFashion: d.trendingFashion ?? prev.trendingFashion,
                 }
               : prev
@@ -259,6 +389,7 @@ export default function AdminHomepagePage() {
     { id: "hero", label: "Hero banner" },
     { id: "strip", label: "Top categories" },
     { id: "bestDeals", label: "Best deals" },
+    { id: "shopByCategory", label: "Shop by category" },
     { id: "trending", label: "Trending fashion" },
   ];
 
@@ -1155,6 +1286,304 @@ export default function AdminHomepagePage() {
             }
           >
             + Add tile
+          </button>
+        </div>
+      )}
+
+      {tab === "shopByCategory" && (
+        <div className="space-y-6">
+          <ComponentCard title="Section header">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <label className="mb-1 block text-xs font-medium text-gray-600">
+                  Section title
+                </label>
+                <Input
+                  value={data.shopByCategory.sectionTitle}
+                  onChange={(e) =>
+                    setData((d) =>
+                      d
+                        ? {
+                            ...d,
+                            shopByCategory: {
+                              ...d.shopByCategory,
+                              sectionTitle: e.target.value,
+                            },
+                          }
+                        : d
+                    )
+                  }
+                />
+              </div>
+            </div>
+          </ComponentCard>
+
+          {data.shopByCategory.cards.map((card, i) => (
+            <ComponentCard key={i} title={`Card ${i + 1}`}>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">Category</label>
+                  <select
+                    value={card.categorySlug}
+                    onChange={(e) => {
+                      const selectedSlug = e.target.value;
+                      const selected = categories.find((c) => c.slug === selectedSlug);
+                      setData((d) =>
+                        d
+                          ? {
+                              ...d,
+                              shopByCategory: {
+                                ...d.shopByCategory,
+                                cards: d.shopByCategory.cards.map((c, j) =>
+                                  j === i
+                                    ? {
+                                        ...c,
+                                        categorySlug: selectedSlug,
+                                        categoryName: selected?.name ?? c.categoryName,
+                                      }
+                                    : c
+                                ),
+                              },
+                            }
+                          : d
+                      );
+                    }}
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm dark:border-gray-700 dark:text-white"
+                  >
+                    <option value="">Select category</option>
+                    {categories.map((cat) => (
+                      <option key={cat._id} value={cat.slug}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                  {card.categoryName ? (
+                    <p className="mt-1 text-xs text-gray-500">Selected: {card.categoryName}</p>
+                  ) : null}
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                    Call-to-action text
+                  </label>
+                  <Input
+                    value={card.ctaText}
+                    onChange={(e) =>
+                      setData((d) =>
+                        d
+                          ? {
+                              ...d,
+                              shopByCategory: {
+                                ...d.shopByCategory,
+                                cards: d.shopByCategory.cards.map((c, j) =>
+                                  j === i ? { ...c, ctaText: e.target.value } : c
+                                ),
+                              },
+                            }
+                          : d
+                      )
+                    }
+                    hint="Example: Shop Now"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-xs font-medium text-gray-600">Image URL</label>
+                  <Input
+                    value={card.image}
+                    onChange={(e) =>
+                      setData((d) =>
+                        d
+                          ? {
+                              ...d,
+                              shopByCategory: {
+                                ...d.shopByCategory,
+                                cards: d.shopByCategory.cards.map((c, j) =>
+                                  j === i ? { ...c, image: e.target.value } : c
+                                ),
+                              },
+                            }
+                          : d
+                      )
+                    }
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                    Upload image
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-700"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        void handleShopCategoryImageUpload(i, file);
+                      }
+                      e.currentTarget.value = "";
+                    }}
+                    disabled={uploadingCardIndex === i}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    {uploadingCardIndex === i ? "Uploading image..." : "Upload replaces the image URL."}
+                  </p>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                    Discount minimum (%)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm dark:border-gray-700 dark:text-white"
+                    value={card.discountMin}
+                    onChange={(e) => {
+                      const nextVal = Number(e.target.value);
+                      setData((d) =>
+                        d
+                          ? {
+                              ...d,
+                              shopByCategory: {
+                                ...d.shopByCategory,
+                                cards: d.shopByCategory.cards.map((c, j) =>
+                                  j === i ? { ...c, discountMin: Number.isFinite(nextVal) ? nextVal : 0 } : c
+                                ),
+                              },
+                            }
+                          : d
+                      );
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                    Discount maximum (%)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm dark:border-gray-700 dark:text-white"
+                    value={card.discountMax}
+                    onChange={(e) => {
+                      const nextVal = Number(e.target.value);
+                      setData((d) =>
+                        d
+                          ? {
+                              ...d,
+                              shopByCategory: {
+                                ...d.shopByCategory,
+                                cards: d.shopByCategory.cards.map((c, j) =>
+                                  j === i ? { ...c, discountMax: Number.isFinite(nextVal) ? nextVal : 0 } : c
+                                ),
+                              },
+                            }
+                          : d
+                      );
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className="text-sm text-gray-600"
+                  disabled={i === 0}
+                  onClick={() =>
+                    setData((d) =>
+                      d && i > 0
+                        ? {
+                            ...d,
+                            shopByCategory: {
+                              ...d.shopByCategory,
+                              cards: (() => {
+                                const a = [...d.shopByCategory.cards];
+                                [a[i - 1], a[i]] = [a[i], a[i - 1]];
+                                return a;
+                              })(),
+                            },
+                          }
+                        : d
+                    )
+                  }
+                >
+                  Move up
+                </button>
+                <button
+                  type="button"
+                  className="text-sm text-gray-600"
+                  disabled={i === data.shopByCategory.cards.length - 1}
+                  onClick={() =>
+                    setData((d) =>
+                      d && i < d.shopByCategory.cards.length - 1
+                        ? {
+                            ...d,
+                            shopByCategory: {
+                              ...d.shopByCategory,
+                              cards: (() => {
+                                const a = [...d.shopByCategory.cards];
+                                [a[i], a[i + 1]] = [a[i + 1], a[i]];
+                                return a;
+                              })(),
+                            },
+                          }
+                        : d
+                    )
+                  }
+                >
+                  Move down
+                </button>
+                <button
+                  type="button"
+                  className="text-sm text-red-600"
+                  onClick={() =>
+                    setData((d) =>
+                      d
+                        ? {
+                            ...d,
+                            shopByCategory: {
+                              ...d.shopByCategory,
+                              cards: d.shopByCategory.cards.filter((_, j) => j !== i),
+                            },
+                          }
+                        : d
+                    )
+                  }
+                >
+                  Remove
+                </button>
+              </div>
+            </ComponentCard>
+          ))}
+
+          <button
+            type="button"
+            className="rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm"
+            onClick={() =>
+              setData((d) =>
+                d
+                  ? {
+                      ...d,
+                      shopByCategory: {
+                        ...d.shopByCategory,
+                        cards: [
+                          ...d.shopByCategory.cards,
+                          {
+                            categorySlug: "",
+                            categoryName: "",
+                            image: "",
+                            discountMin: 30,
+                            discountMax: 80,
+                            ctaText: "Shop Now",
+                          },
+                        ],
+                      },
+                    }
+                  : d
+              )
+            }
+          >
+            + Add card
           </button>
         </div>
       )}

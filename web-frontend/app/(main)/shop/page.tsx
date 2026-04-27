@@ -34,6 +34,8 @@ function ShopContent() {
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const currentMin = searchParams.get("min") || "";
   const currentMax = searchParams.get("max") || "";
+  const currentDiscountMin = searchParams.get("discountMin") || "";
+  const currentDiscountMax = searchParams.get("discountMax") || "";
   const currentBrand = searchParams.get("brand") || "";
   const currentSearch = searchParams.get("search") || "";
 
@@ -101,6 +103,8 @@ function ShopContent() {
     if (currentSort) params.set("sort", currentSort);
     if (currentMin) params.set("minPrice", currentMin);
     if (currentMax) params.set("maxPrice", currentMax);
+    if (currentDiscountMin) params.set("discountMin", currentDiscountMin);
+    if (currentDiscountMax) params.set("discountMax", currentDiscountMax);
     if (currentBrand) params.set("brand", currentBrand);
     if (currentSearch) params.set("search", currentSearch);
 
@@ -134,9 +138,17 @@ function ShopContent() {
         setTotalCount(productsData.length);
       })
       .finally(() => setLoading(false));
-  }, [currentCategory, currentSort, currentPage, currentMin, currentMax, currentBrand, currentSearch]);
+  }, [currentCategory, currentSort, currentPage, currentMin, currentMax, currentDiscountMin, currentDiscountMax, currentBrand, currentSearch]);
 
-  const hasFilters = !!(currentCategory || currentMin || currentMax || currentBrand || currentSearch);
+  const hasFilters = !!(
+    currentCategory ||
+    currentMin ||
+    currentMax ||
+    currentDiscountMin ||
+    currentDiscountMax ||
+    currentBrand ||
+    currentSearch
+  );
 
   const handleCategoryClick = useCallback((slug: string) => {
     updateParam("category", currentCategory === slug ? "" : slug);
@@ -312,6 +324,12 @@ function ShopContent() {
                 <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1.5 rounded-full">
                   ₹{currentMin || "0"} - ₹{currentMax || "∞"}
                   <button onClick={() => removeParams("min", "max")}><X size={12} /></button>
+                </span>
+              )}
+              {(currentDiscountMin || currentDiscountMax) && (
+                <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1.5 rounded-full">
+                  Discount {currentDiscountMin || "0"}% - {currentDiscountMax || "100"}%
+                  <button onClick={() => removeParams("discountMin", "discountMax")}><X size={12} /></button>
                 </span>
               )}
               {currentSearch && (

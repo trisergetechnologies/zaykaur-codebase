@@ -134,5 +134,55 @@ export function getDefaultHomepageContent() {
         },
       ],
     },
+    shopByCategory: {
+      sectionTitle: "SHOP BY CATEGORY",
+      cards: [
+        {
+          categorySlug: "ethnic-wear",
+          categoryName: "Ethnic Wear",
+          image:
+            "https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=900",
+          discountMin: 50,
+          discountMax: 80,
+          ctaText: "Shop Now",
+        },
+        {
+          categorySlug: "casual-wear",
+          categoryName: "Casual Wear",
+          image:
+            "https://images.unsplash.com/photo-1516826957135-700dedea698c?q=80&w=900",
+          discountMin: 40,
+          discountMax: 80,
+          ctaText: "Shop Now",
+        },
+        {
+          categorySlug: "activewear",
+          categoryName: "Activewear",
+          image:
+            "https://images.unsplash.com/photo-1483721310020-03333e577078?q=80&w=900",
+          discountMin: 30,
+          discountMax: 70,
+          ctaText: "Shop Now",
+        },
+        {
+          categorySlug: "western-wear",
+          categoryName: "Western Wear",
+          image:
+            "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=900",
+          discountMin: 40,
+          discountMax: 80,
+          ctaText: "Shop Now",
+        },
+        {
+          categorySlug: "sportswear",
+          categoryName: "Sportswear",
+          image:
+            "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=900",
+          discountMin: 30,
+          discountMax: 80,
+          ctaText: "Shop Now",
+        },
+      ],
+    },
   };
 }
