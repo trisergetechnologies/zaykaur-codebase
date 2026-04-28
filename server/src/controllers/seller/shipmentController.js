@@ -6,6 +6,7 @@ import {
   canTransitionOrderStatus,
   deriveOrderStatusFromShipments,
 } from "../../lib/orderLifecycle.js";
+import { notifyOrderStatusChange } from "../../lib/orderNotifications.js";
 
 const getSellerItemIndexes = (order, sellerId) => {
   const indices = [];
@@ -178,10 +179,13 @@ export const createShipment = async (req, res) => {
       ],
     });
 
+    const prevOrderStatus = order.orderStatus;
     const derivedOrderStatus = deriveOrderStatusFromShipments(order.shipments, order.orderStatus);
     order.orderStatus = derivedOrderStatus;
     applyOrderStatusTimestamps(order, derivedOrderStatus, now);
     await order.save();
+
+    notifyOrderStatusChange(prevOrderStatus, order.orderStatus, order).catch(() => null);
 
     return res.status(200).json({
       success: true,
@@ -255,6 +259,7 @@ export const updateShipmentStatus = async (req, res) => {
       description: description || "Shipment status updated",
     });
 
+    const prevOrderStatus = order.orderStatus;
     const derivedOrderStatus = deriveOrderStatusFromShipments(order.shipments, order.orderStatus);
     if (canTransitionOrderStatus(order.orderStatus, derivedOrderStatus) || derivedOrderStatus === order.orderStatus) {
       order.orderStatus = derivedOrderStatus;
@@ -262,6 +267,8 @@ export const updateShipmentStatus = async (req, res) => {
     }
 
     await order.save();
+
+    notifyOrderStatusChange(prevOrderStatus, order.orderStatus, order).catch(() => null);
 
     return res.status(200).json({
       success: true,

@@ -95,7 +95,7 @@ const SingleProductCartView = ({ product, index = 0 }: { product: Product; index
             }`}
             aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
           >
-            <Heart size={13} fill={inWishlist ? "currentColor" : "none"} strokeWidth={2} />
+            <Heart size={13} className="sm:w-[14px] sm:h-[14px]" fill={inWishlist ? "currentColor" : "none"} strokeWidth={2} />
           </button>
 
           {/* Discount Badge */}
@@ -110,7 +110,7 @@ const SingleProductCartView = ({ product, index = 0 }: { product: Product; index
         <div className="relative px-2.5 sm:px-3 pt-2.5 sm:pt-3 pb-2.5 sm:pb-3 flex flex-col gap-1 sm:gap-1.5 flex-1">
           {/* Brand */}
           {brand && (
-            <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.14em] text-slate-400 font-medium truncate">
+            <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.14em] sm:tracking-[0.15em] text-slate-400 font-medium truncate">
               {brand}
             </span>
           )}
@@ -144,7 +144,7 @@ const SingleProductCartView = ({ product, index = 0 }: { product: Product; index
 
           {/* Price */}
           <div className="flex items-baseline gap-1 sm:gap-1.5 mt-0.5 sm:mt-1">
-            <span className="text-[15px] sm:text-lg font-normal text-purple-600 leading-none">
+            <span className="text-[15px] sm:text-lg font-normal sm:font-bold text-purple-600 sm:text-slate-900 leading-none">
               ₹{discountedPrice.toLocaleString()}
             </span>
             {strikePrice != null && strikePrice > discountedPrice && (
@@ -160,7 +160,7 @@ const SingleProductCartView = ({ product, index = 0 }: { product: Product; index
             onClick={handleQuickAdd}
             className="zk-cart-btn mt-1.5 sm:mt-2 w-full flex items-center justify-center gap-1.5 sm:gap-2 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl text-[11px] sm:text-[13px] font-semibold tracking-wide transition-all duration-200 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
           >
-            <ShoppingBag size={13} strokeWidth={2.2} />
+            <ShoppingBag size={13} className="sm:w-[14px] sm:h-[14px]" strokeWidth={2.2} />
             <span className="sm:hidden">{outOfStock ? "Sold Out" : "Add"}</span>
             <span className="hidden sm:inline">{outOfStock ? "Sold Out" : "Add to Cart"}</span>
           </button>

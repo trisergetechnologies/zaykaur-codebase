@@ -1,0 +1,20 @@
+{
+  "name": "zaykaur-notification-service",
+  "version": "1.0.0",
+  "description": "Standalone notification ingress (HTTP events) — email now, queue/Firebase later",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "helmet": "^8.1.0",
+    "nodemailer": "^8.0.1",
+    "pino": "^10.3.1",
+    "pino-pretty": "^13.1.3"
+  }
+}

@@ -11,8 +11,8 @@ const ShopByCategoryGrid = () => {
   if (!cards.length) return null;
 
   return (
-    <section className="max-w-[1600px] mx-auto py-6 sm:py-14 px-3 lg:px-6">
-      <div className="zk-premium-surface rounded-3xl border border-slate-100/80 p-3 sm:p-6 lg:p-8">
+    <section className="max-w-[1700px] mx-auto py-6 sm:py-14 px-2 sm:px-3 lg:px-4 xl:px-5">
+      <div className="zk-premium-surface rounded-3xl border border-slate-100/80 p-3 sm:p-5 lg:p-6">
         <h2 className="mb-3 text-[1.04rem] font-extrabold tracking-[0.15em] text-slate-900 sm:mb-7 sm:text-3xl">
           {sectionTitle}
         </h2>

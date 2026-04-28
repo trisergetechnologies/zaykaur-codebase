@@ -4,6 +4,7 @@ import {
   applyOrderStatusTimestamps,
   canTransitionOrderStatus,
 } from "../../lib/orderLifecycle.js";
+import { notifyOrderStatusChange } from "../../lib/orderNotifications.js";
 
 const orderIncludesSeller = (order, sellerId) => {
   const sellerObjId = mongoose.Types.ObjectId.isValid(String(sellerId))
@@ -166,9 +167,12 @@ export const updateSellerOrderStatus = async (req, res) => {
       });
     }
 
+    const prevOrderStatus = order.orderStatus;
     order.orderStatus = nextStatus;
     applyOrderStatusTimestamps(order, nextStatus, new Date());
     await order.save();
+
+    notifyOrderStatusChange(prevOrderStatus, order.orderStatus, order).catch(() => null);
 
     return res.status(200).json({
       success: true,

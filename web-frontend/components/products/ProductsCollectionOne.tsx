@@ -51,11 +51,11 @@ const ProductsCollectionOne = () => {
   const loading = homepageLoading || (!hasFeatured && fallbackLoading);
 
   const productsGridClassName =
-    "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-2.5 gap-y-3.5 sm:gap-x-6 sm:gap-y-7 md:gap-x-10 md:gap-y-8 lg:gap-x-12";
+    "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-2.5 gap-y-3.5 sm:gap-x-4 sm:gap-y-7 md:gap-x-5 md:gap-y-8";
 
   return (
-    <section className="max-w-[1600px] mx-auto py-7 sm:py-14 px-3 lg:px-6">
-      <div className="zk-premium-surface rounded-3xl border border-slate-100/80 p-3 sm:p-6 lg:p-8">
+    <section className="max-w-[1800px] mx-auto py-7 sm:py-14 px-1 sm:px-2 lg:px-3 xl:px-4">
+      <div className="zk-premium-surface rounded-3xl border border-slate-100/80 p-3 sm:p-4 lg:p-5">
 
       <Tabs defaultValue="top-rated" className="w-full">
 

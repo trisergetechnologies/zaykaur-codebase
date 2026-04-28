@@ -1,4 +1,5 @@
 import Product from "../../models/Product.js";
+import { notifyInventoryLowStockIfCrossed } from "../../lib/orderNotifications.js";
 
 const LOW_STOCK_THRESHOLD = 5;
 
@@ -95,8 +96,15 @@ export const updateStock = async (req, res) => {
       });
     }
 
+    const oldStock = variant.stock;
     variant.stock = stock;
     await product.save();
+
+    notifyInventoryLowStockIfCrossed(oldStock, variant.stock, product.name, req.user._id, {
+      productId: String(product._id),
+      variantId: String(variant._id),
+      sku: variant.sku,
+    });
 
     return res.status(200).json({
       success: true,
@@ -129,6 +137,14 @@ export const bulkUpdateStock = async (req, res) => {
 
     for (const item of updates) {
       try {
+        const productBefore = await Product.findOne({
+          _id: item.productId,
+          seller: req.user._id,
+          isDeleted: false,
+        }).select("name variants");
+        const variantBefore = productBefore?.variants?.id(item.variantId);
+        const oldStock = variantBefore?.stock;
+
         const result = await Product.updateOne(
           {
             _id: item.productId,
@@ -140,6 +156,13 @@ export const bulkUpdateStock = async (req, res) => {
         );
 
         if (result.modifiedCount > 0) {
+          if (oldStock != null && productBefore) {
+            notifyInventoryLowStockIfCrossed(oldStock, item.stock, productBefore.name, req.user._id, {
+              productId: String(item.productId),
+              variantId: String(item.variantId),
+              sku: variantBefore?.sku,
+            });
+          }
           results.push({ productId: item.productId, variantId: item.variantId, stock: item.stock, status: "updated" });
         } else {
           errors.push({ productId: item.productId, variantId: item.variantId, status: "not_found" });

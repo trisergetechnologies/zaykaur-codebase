@@ -5,6 +5,7 @@ import {
   canTransitionOrderStatus,
   deriveOrderStatusFromShipments,
 } from "../../lib/orderLifecycle.js";
+import { notifyOrderStatusChange } from "../../lib/orderNotifications.js";
 
 const ensureWebhookAuthorized = (req) => {
   const expectedSecret = process.env.DELIVERY_WEBHOOK_SECRET;
@@ -137,6 +138,7 @@ export const handleDeliveryWebhook = async (req, res) => {
       description: description || "Webhook event received",
     });
 
+    const prevOrderStatus = order.orderStatus;
     const derivedOrderStatus = deriveOrderStatusFromShipments(order.shipments, order.orderStatus);
     if (
       canTransitionOrderStatus(order.orderStatus, derivedOrderStatus) ||
@@ -147,6 +149,8 @@ export const handleDeliveryWebhook = async (req, res) => {
     }
 
     await order.save();
+
+    notifyOrderStatusChange(prevOrderStatus, order.orderStatus, order).catch(() => null);
 
     return res.status(200).json({
       success: true,

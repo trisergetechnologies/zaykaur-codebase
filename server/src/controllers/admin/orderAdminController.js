@@ -4,6 +4,10 @@ import {
   canTransitionOrderStatus,
   canTransitionPaymentStatus,
 } from "../../lib/orderLifecycle.js";
+import {
+  notifyOrderStatusChange,
+  notifyPaymentRefunded,
+} from "../../lib/orderNotifications.js";
 
 const parseDate = (val) => {
   if (!val) return null;
@@ -125,9 +129,12 @@ export const updateOrderStatus = async (req, res) => {
       });
     }
 
+    const prevOrderStatus = order.orderStatus;
     order.orderStatus = status;
     applyOrderStatusTimestamps(order, status, new Date());
     await order.save();
+
+    notifyOrderStatusChange(prevOrderStatus, order.orderStatus, order).catch(() => null);
 
     return res.status(200).json({
       success: true,
@@ -171,10 +178,13 @@ export const updateOrderPaymentStatus = async (req, res) => {
       });
     }
 
+    const prevPaymentStatus = order.paymentStatus;
     order.paymentStatus = paymentStatus;
     if (paymentId) order.paymentId = paymentId;
     if (paymentStatus === "paid" && !order.paidAt) order.paidAt = new Date();
     await order.save();
+
+    notifyPaymentRefunded(prevPaymentStatus, order.paymentStatus, order).catch(() => null);
 
     return res.status(200).json({
       success: true,

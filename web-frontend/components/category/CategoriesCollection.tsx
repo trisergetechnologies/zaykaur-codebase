@@ -72,7 +72,7 @@ const BestDealsSection = () => {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-4 sm:mb-12 gap-2.5 sm:gap-4">
         <div>
-          <span className="text-pink-600 font-bold tracking-[0.18em] uppercase text-[11px] sm:text-sm">{sectionEyebrow}</span>
+          <span className="text-pink-600 font-bold tracking-[0.18em] sm:tracking-widest uppercase text-[11px] sm:text-sm">{sectionEyebrow}</span>
           <h2 className="text-[1.38rem] sm:text-4xl md:text-5xl font-black text-gray-900 dark:text-white mt-1 sm:mt-2 italic">
             {sectionTitle}
             <span className="text-pink-600">.</span>

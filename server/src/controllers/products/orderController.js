@@ -7,6 +7,10 @@ import {
   validateAppliedCartCouponForOrder,
   incrementCouponUsage,
 } from "../couponController.js";
+import {
+  notifyLowStockAfterDecrement,
+  notifyOrderPlaced,
+} from "../../lib/orderNotifications.js";
 
 export const createOrder = async (req, res) => {
   const reservedStocks = [];
@@ -82,6 +86,8 @@ export const createOrder = async (req, res) => {
       if (!stockUpdate.modifiedCount) {
         fail(`Insufficient stock for ${product.name}`);
       }
+
+      notifyLowStockAfterDecrement(product._id, variant._id).catch(() => null);
 
       reservedStocks.push({
         productId: product._id,
@@ -237,6 +243,10 @@ export const createOrder = async (req, res) => {
     }
     orderCreated = true;
     reservedStocks.length = 0;
+
+    for (const o of createdOrders) {
+      notifyOrderPlaced(o, user);
+    }
 
     if (appliedCoupon && discountTotal > 0) {
       await incrementCouponUsage(appliedCoupon._id, req.user._id).catch(() => null);

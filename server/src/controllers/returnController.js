@@ -1,5 +1,9 @@
 import ReturnRequest from "../models/ReturnRequest.js";
 import Order from "../models/Order.js";
+import {
+  notifyReturnRefundCompleted,
+  notifyReturnRequested,
+} from "../lib/orderNotifications.js";
 
 const RETURN_STATUSES = [
   "requested",
@@ -95,6 +99,8 @@ export const createReturnRequest = async (req, res) => {
       images: images || [],
       refundAmount,
     });
+
+    notifyReturnRequested(returnRequest, order).catch(() => null);
 
     return res.status(201).json({
       success: true,
@@ -240,6 +246,11 @@ export const updateReturnStatus = async (req, res) => {
 
     await returnReq.save();
 
+    if (status === "refund_completed") {
+      const ord = await Order.findById(returnReq.orderId).select("orderNumber").lean();
+      notifyReturnRefundCompleted(returnReq, ord).catch(() => null);
+    }
+
     return res.status(200).json({
       success: true,
       message: `Return status updated to ${status}`,
@@ -320,6 +331,11 @@ export const adminOverrideReturn = async (req, res) => {
     returnReq.resolvedBy = req.user._id;
 
     await returnReq.save();
+
+    if (status === "refund_completed") {
+      const ord = await Order.findById(returnReq.orderId).select("orderNumber").lean();
+      notifyReturnRefundCompleted(returnReq, ord).catch(() => null);
+    }
 
     return res.status(200).json({
       success: true,

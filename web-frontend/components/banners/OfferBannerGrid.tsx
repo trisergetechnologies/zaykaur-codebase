@@ -93,7 +93,7 @@ const OfferBannerGrid = () => {
       : (defaultCategories as TrendingCard[]);
 
   return (
-    <section className="max-w-[1600px] mx-auto px-3 sm:px-4 py-7 sm:py-14">
+    <section className="max-w-[1700px] mx-auto px-2 sm:px-3 lg:px-4 xl:px-5 py-7 sm:py-14">
 
       {/* SECTION HEADER */}
       <div className="mb-4 sm:mb-10">
